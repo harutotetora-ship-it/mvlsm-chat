@@ -55,6 +55,7 @@ background:#fafafa;
 
 <body>
 
+<!-- 🔐 ログイン -->
 <div id="login">
 <h1>MVLsmチャット</h1>
 <input type="text" id="name" placeholder="名前（空なら名無し）"><br>
@@ -63,37 +64,85 @@ background:#fafafa;
 <p id="error"></p>
 </div>
 
+<!-- 💬 チャット -->
 <div id="chat" style="display:none;">
 <h2>MVLsmチャット</h2>
+
 <div id="messages"></div>
+
 <input type="text" id="msg" placeholder="メッセージ入力">
-<button onclick="send()">送信</button>
+<button onclick="sendMsg()">送信</button>
 </div>
 
-<script>
-let username="名無し";
+<!-- 🚀 Firebase -->
+<script type="module">
 
-function login(){
-let pass=document.getElementById("pass").value;
-username=document.getElementById("name").value || "名無し";
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+import {
+getDatabase,
+ref,
+push,
+onChildAdded
+} from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
 
-if(pass==="MvLO"){
-document.getElementById("login").style.display="none";
-document.getElementById("chat").style.display="block";
+// 🔥 Firebase設定
+const firebaseConfig = {
+apiKey: "AIzaSyARMFFYzOfZlptX72yn17AqCrXq3vyKK1s",
+authDomain: "smtyatto.firebaseapp.com",
+databaseURL: "https://smtyatto-default-rtdb.firebaseio.com",
+projectId: "smtyatto",
+storageBucket: "smtyatto.firebasestorage.app",
+messagingSenderId: "720432898013",
+appId: "1:720432898013:web:3fc9bb90082235ab506034",
+measurementId: "G-2NJNZJ46K0"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getDatabase(app);
+
+// 👤 ユーザー名
+let username = "名無し";
+
+// 🔐 ログイン（そのまま残す）
+window.login = function(){
+let pass = document.getElementById("pass").value;
+username = document.getElementById("name").value || "名無し";
+
+if(pass === "MvLO"){
+document.getElementById("login").style.display = "none";
+document.getElementById("chat").style.display = "block";
 }else{
-document.getElementById("error").innerText="パスワードが違います";
+document.getElementById("error").innerText = "パスワードが違います";
 }
-}
+};
 
-function send(){
-let msg=document.getElementById("msg").value;
-if(msg==="") return;
+// 💬 送信（Firebase版）
+window.sendMsg = function(){
+let msg = document.getElementById("msg").value;
+if(msg === "") return;
 
-let box=document.getElementById("messages");
-box.innerHTML += "<p><b>"+username+"</b>: "+msg+"</p>";
-document.getElementById("msg").value="";
-box.scrollTop=box.scrollHeight;
-}
+push(ref(db, "chat"), {
+name: username,
+text: msg,
+time: Date.now()
+});
+
+document.getElementById("msg").value = "";
+};
+
+// 📡 受信（リアルタイム）
+onChildAdded(ref(db, "chat"), (data) => {
+let d = data.val();
+
+let div = document.createElement("p");
+div.innerHTML = "<b>" + d.name + "</b>: " + d.text;
+
+document.getElementById("messages").appendChild(div);
+
+let box = document.getElementById("messages");
+box.scrollTop = box.scrollHeight;
+});
+
 </script>
 
 </body>
