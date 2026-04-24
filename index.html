@@ -18,7 +18,6 @@ display:flex;
 height:100vh;
 }
 
-/* 左 */
 #sidebar{
 width:220px;
 background:#2b2d31;
@@ -47,9 +46,9 @@ padding:8px;
 margin-top:5px;
 border-radius:5px;
 border:none;
+box-sizing:border-box;
 }
 
-/* 右 */
 #chatArea{
 flex:1;
 display:flex;
@@ -84,7 +83,7 @@ outline:none;
 }
 
 button{
-margin-left:5px;
+margin-top:5px;
 padding:10px;
 border:none;
 border-radius:5px;
@@ -119,12 +118,11 @@ text-align:center;
 <!-- 💬 本体 -->
 <div id="layout" style="display:none;">
 
-<!-- 左 -->
 <div id="sidebar">
 <h3>ROOM</h3>
 
-<button onclick="switchRoom('general')">#バグ報告</button>
-<button onclick="switchRoom('game')">#雑談</button>
+<button onclick="switchRoom('general')">#general</button>
+<button onclick="switchRoom('game')">#game</button>
 
 <hr>
 
@@ -134,8 +132,10 @@ text-align:center;
 <hr>
 
 <h4>管理者</h4>
+
+<!-- 🔥 ここが今回のポイント -->
 <input id="adminPass" placeholder="管理者パスワード">
-<button onclick="adminLogin()">管理者認証</button>
+<button onclick="adminLogin()">認証</button>
 
 <input id="target" placeholder="対象ユーザー">
 <button onclick="kickUser()">KICK</button>
@@ -143,7 +143,6 @@ text-align:center;
 
 </div>
 
-<!-- 右 -->
 <div id="chatArea">
 
 <div id="top">
@@ -190,9 +189,7 @@ let username = "名無し";
 let currentRoom = "general";
 let isAdmin = false;
 
-/* =====================
-   🔐 ログイン
-===================== */
+/* 🔐 ログイン */
 window.login = function(){
 
 const pass = document.getElementById("pass").value;
@@ -206,33 +203,27 @@ return;
 document.getElementById("login").style.display="none";
 document.getElementById("layout").style.display="flex";
 
-/* ユーザー登録 */
 set(ref(db,"users/"+username),{
 online:true
 });
 
 };
 
-/* =====================
-   🔑 管理者認証
-===================== */
+/* 🔑 管理者 */
 window.adminLogin = function(){
 
 const pass = document.getElementById("adminPass").value;
 
-/* ←ここが管理者パスワード */
 if(pass === "sm64はMvLOが好きだが弱すぎる人だった"){
 isAdmin = true;
-alert("管理者モードON");
+alert("管理者ON");
 }else{
-alert("違います");
+alert("違う");
 }
 
 };
 
-/* =====================
-   🏠 部屋
-===================== */
+/* 🏠 部屋 */
 window.switchRoom = function(room){
 currentRoom = room;
 document.getElementById("messages").innerHTML="";
@@ -249,12 +240,9 @@ const name = document.getElementById("roomName").value;
 if(!name) return;
 
 switchRoom(name);
-
 };
 
-/* =====================
-   💬 送信
-===================== */
+/* 💬 送信 */
 window.sendMsg = function(){
 
 const msg = document.getElementById("msg").value;
@@ -267,20 +255,18 @@ time:Date.now()
 });
 
 document.getElementById("msg").value="";
-
 };
 
-/* =====================
-   🚫 BAN / KICK
-===================== */
+/* 🚫 BAN */
 window.banUser = function(){
 if(!isAdmin) return;
 
 const t = document.getElementById("target").value;
 set(ref(db,"banned/"+t),true);
-alert("BANした");
+alert("BAN");
 };
 
+/* 👢 KICK */
 window.kickUser = function(){
 if(!isAdmin) return;
 
@@ -288,12 +274,10 @@ const t = document.getElementById("target").value;
 if(t === username){
 location.reload();
 }
-alert("KICKした");
+alert("KICK");
 };
 
-/* =====================
-   💬 受信
-===================== */
+/* 📡 受信 */
 function listenRoom(){
 
 onChildAdded(ref(db,"chat/"+currentRoom),(snap)=>{
@@ -303,16 +287,13 @@ const div = document.createElement("div");
 div.innerHTML = "<b>"+d.name+"</b>: "+d.text;
 
 document.getElementById("messages").appendChild(div);
-
 });
 
 }
 
 listenRoom();
 
-/* =====================
-   🟢 オンライン
-===================== */
+/* 🟢 オンライン */
 onValue(ref(db,"users"),(snap)=>{
 const data = snap.val() || {};
 
