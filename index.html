@@ -1,4 +1,4 @@
- <!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="ja">
 <head>
 <meta charset="UTF-8">
@@ -82,11 +82,10 @@ margin-bottom:10px;
 <input id="iconUrl" placeholder="アイコンURL">
 <button onclick="setIcon()">アイコン設定</button>
 
-<!-- 💬 メッセージ入力（1個だけ！ここ重要） -->
+<div id="messages"></div>
+
 <input id="msg" placeholder="メッセージ">
 <button onclick="sendMsg()">送信</button>
-
-<div id="messages"></div>
 
 </div>
 
@@ -98,6 +97,7 @@ import {
 getDatabase,
 ref,
 push,
+onChildAdded,
 set,
 onValue
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
@@ -116,7 +116,6 @@ const app = initializeApp(firebaseConfig);
 const db = getDatabase(app);
 
 let username = "名無し";
-let iconCache = {};
 
 // 🔐 ログイン
 window.login = function(){
@@ -127,7 +126,6 @@ if(pass === "MvLO"){
 document.getElementById("login").style.display="none";
 document.getElementById("chat").style.display="block";
 
-// 初期アイコン
 set(ref(db,"icons/"+username), {
 icon: "https://via.placeholder.com/30"
 });
@@ -163,25 +161,13 @@ time: Date.now()
 document.getElementById("msg").value="";
 };
 
-// 🖼 アイコンキャッシュ
-onValue(ref(db,"icons"), (snap)=>{
-iconCache = snap.val() || {};
-});
+// 📡 メッセージ表示
+onChildAdded(ref(db,"chat"), (data)=>{
+let d = data.val();
 
-// 💬 チャット表示（安定・順番OK）
-onValue(ref(db,"chat"), (snap)=>{
-let data = snap.val() || {};
+onValue(ref(db,"icons/"+d.name), (snap)=>{
 
-let list = Object.values(data);
-list.sort((a,b)=>a.time - b.time);
-
-let box = document.getElementById("messages");
-box.innerHTML = "";
-
-list.forEach(d=>{
-
-let icon = iconCache[d.name]?.icon
-|| "https://via.placeholder.com/30";
+let icon = snap.val()?.icon || "https://via.placeholder.com/30";
 
 let p = document.createElement("p");
 
@@ -189,7 +175,7 @@ p.innerHTML =
 "<img src='"+icon+"' width='25' style='border-radius:50%'> " +
 "<b>"+d.name+"</b>: "+d.text;
 
-box.appendChild(p);
+document.getElementById("messages").appendChild(p);
 
 });
 
@@ -197,16 +183,28 @@ box.appendChild(p);
 
 // 🟢 オンライン表示
 onValue(ref(db,"icons"), (snap)=>{
-let data = snap.val() || {};
+let data = snap.val();
 let box = document.getElementById("online");
 
 box.innerHTML = "🟢 オンライン: ";
+
+if(!data) return;
 
 Object.keys(data).forEach(name=>{
 box.innerHTML += name + " ";
 });
 });
 
+</script>
+
+<!-- ⌨️ Enter送信 -->
+<script>
+document.getElementById("msg").addEventListener("keydown", function(e){
+if(e.key === "Enter"){
+e.preventDefault();
+sendMsg();
+}
+});
 </script>
 
 </body>
