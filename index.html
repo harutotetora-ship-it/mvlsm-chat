@@ -59,7 +59,6 @@ margin-bottom:10px;
 
 <body>
 
-<!-- 🔐 ログイン -->
 <div id="login">
 <h2>MVLsmチャット</h2>
 
@@ -71,7 +70,6 @@ margin-bottom:10px;
 <p id="error"></p>
 </div>
 
-<!-- 💬 チャット -->
 <div id="chat" style="display:none;">
 
 <h2>チャット</h2>
@@ -88,7 +86,6 @@ margin-bottom:10px;
 
 </div>
 
-<!-- 🚀 Firebase -->
 <script type="module">
 
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
@@ -115,7 +112,12 @@ appId: "1:720432898013:web:3fc9bb90082235ab506034"
 const app = initializeApp(firebaseConfig);
 const db = getDatabase(app);
 
+/* =====================
+   👤 ユーザー情報
+===================== */
 let username = "名無し";
+const userId = crypto.randomUUID(); // ★これが重要（バグ解決）
+
 let icons = {};
 
 /* =====================
@@ -127,26 +129,30 @@ let pass = document.getElementById("pass").value;
 username = document.getElementById("name").value || "名無し";
 
 if(pass === "MvLO"){
+
 document.getElementById("login").style.display="none";
 document.getElementById("chat").style.display="block";
 
-/* 初期アイコン */
-set(ref(db,"icons/"+username),{
+/* アイコン初期化 */
+set(ref(db,"icons/"+userId),{
+name: username,
 icon:"https://via.placeholder.com/30"
 });
 
-/* 🟢 オンライン登録（ガチ版） */
-const statusRef = ref(db,"status/"+username);
+/* 🟢 オンライン登録（ID管理） */
+const statusRef = ref(db,"status/"+userId);
 
 set(statusRef,{
 online:true,
-time:Date.now()
+name: username,
+time: Date.now()
 });
 
-/* 切断時自動オフライン */
+/* 切断時に自動オフライン */
 onDisconnect(statusRef).set({
 online:false,
-time:Date.now()
+name: username,
+time: Date.now()
 });
 
 }else{
@@ -156,14 +162,15 @@ document.getElementById("error").innerText="パスワードが違います";
 });
 
 /* =====================
-   🖼 アイコン
+   🖼 アイコン設定
 ===================== */
 document.getElementById("iconBtn").addEventListener("click", () => {
 
 const url = document.getElementById("iconUrl").value;
 if(!url) return;
 
-set(ref(db,"icons/"+username),{
+set(ref(db,"icons/"+userId),{
+name: username,
 icon:url
 });
 
@@ -206,13 +213,20 @@ icons = snap.val() || {};
 });
 
 /* =====================
-   💬 メッセージ表示
+   💬 チャット表示
 ===================== */
 onChildAdded(ref(db,"chat"), (data)=>{
 
 let d = data.val();
 
-let icon = icons[d.name] || "https://via.placeholder.com/30";
+let icon = "https://via.placeholder.com/30";
+
+/* userIdからアイコン探す */
+Object.keys(icons).forEach(id=>{
+if(icons[id].name === d.name){
+icon = icons[id].icon;
+}
+});
 
 let p = document.createElement("p");
 
@@ -225,7 +239,7 @@ document.getElementById("messages").appendChild(p);
 });
 
 /* =====================
-   🟢 ガチオンライン表示
+   🟢 オンライン表示（修正版）
 ===================== */
 onValue(ref(db,"status"), (snap)=>{
 
@@ -234,9 +248,9 @@ let box = document.getElementById("online");
 
 box.innerHTML = "🟢 オンライン: ";
 
-Object.keys(data).forEach(name=>{
-if(data[name].online){
-box.innerHTML += name + " ";
+Object.keys(data).forEach(id=>{
+if(data[id].online){
+box.innerHTML += data[id].name + " ";
 }
 });
 
