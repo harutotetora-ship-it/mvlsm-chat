@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+ <!DOCTYPE html>
 <html lang="ja">
 <head>
 <meta charset="UTF-8">
@@ -82,10 +82,11 @@ margin-bottom:10px;
 <input id="iconUrl" placeholder="アイコンURL">
 <button onclick="setIcon()">アイコン設定</button>
 
-<div id="messages"></div>
-
+<!-- 💬 メッセージ入力（1個だけ！ここ重要） -->
 <input id="msg" placeholder="メッセージ">
 <button onclick="sendMsg()">送信</button>
+
+<div id="messages"></div>
 
 </div>
 
@@ -162,12 +163,12 @@ time: Date.now()
 document.getElementById("msg").value="";
 };
 
-// 🟡 アイコンまとめ取得
+// 🖼 アイコンキャッシュ
 onValue(ref(db,"icons"), (snap)=>{
 iconCache = snap.val() || {};
 });
 
-// 💬 チャット表示（安定版）
+// 💬 チャット表示（安定・順番OK）
 onValue(ref(db,"chat"), (snap)=>{
 let data = snap.val() || {};
 
@@ -189,6 +190,7 @@ p.innerHTML =
 "<b>"+d.name+"</b>: "+d.text;
 
 box.appendChild(p);
+
 });
 
 });
@@ -205,16 +207,6 @@ box.innerHTML += name + " ";
 });
 });
 
-</script>
-
-<!-- ⌨️ Enter送信 -->
-<script>
-document.getElementById("msg").addEventListener("keydown", function(e){
-if(e.key === "Enter"){
-e.preventDefault();
-sendMsg();
-}
-});
 </script>
 
 </body>
