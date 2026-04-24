@@ -22,6 +22,7 @@ height:100vh;
 width:180px;
 background:#2b2d31;
 padding:10px;
+box-sizing:border-box;
 }
 
 #sidebar button{
@@ -103,7 +104,6 @@ border:none;
 
 <body>
 
-<!-- 🔐 ログイン -->
 <div id="login">
 <h2>MVLsmチャット</h2>
 <input id="name" placeholder="名前">
@@ -112,10 +112,10 @@ border:none;
 <p id="error"></p>
 </div>
 
-<!-- 💬 本体 -->
 <div id="layout" style="display:none;">
 
 <div id="sidebar">
+<h3>ROOM</h3>
 <button onclick="switchRoom('general')">#general</button>
 <button onclick="switchRoom('game')">#game</button>
 <button onclick="switchRoom('mvlsm')">#mvlsm</button>
@@ -129,13 +129,8 @@ border:none;
 
 <div id="messages"></div>
 
-<div style="padding:5px;">
-<input id="iconUrl" placeholder="アイコンURL">
-<button id="iconBtn">アイコン変更</button>
-</div>
-
 <div id="inputArea">
-<input id="msg" placeholder="メッセージ">
+<input id="msg" placeholder="メッセージ（200文字まで）">
 <button id="sendBtn">送信</button>
 </div>
 
@@ -188,6 +183,7 @@ return;
 document.getElementById("login").style.display="none";
 document.getElementById("layout").style.display="flex";
 
+/* ユーザー登録 */
 const uref = ref(db,"users/"+userId);
 
 set(uref,{
@@ -203,7 +199,7 @@ online:false
 
 };
 
-/* 🏠 部屋切替 */
+/* 🏠 部屋 */
 window.switchRoom = function(room){
 
 currentRoom = room;
@@ -213,46 +209,34 @@ listenRoom();
 
 };
 
-/* 🖼 アイコン */
-document.getElementById("iconBtn").onclick = () => {
+/* 💬 200文字制限 */
+function limitText(text){
+if(!text) return "";
+return text.length > 200 ? text.slice(0,200) + "..." : text;
+}
 
-const url = document.getElementById("iconUrl").value;
-if(!url) return;
-
-set(ref(db,"users/"+userId),{
-name: username,
-icon: url,
-online:true
-});
-
-};
-
-/* 💬 送信（200文字制限） */
+/* 💬 送信 */
 function sendMsg(){
 
-const input = document.getElementById("msg");
-let msg = input.value.trim();
-
+let msg = document.getElementById("msg").value;
 if(!msg) return;
 
-/* 🔥 200文字制限 */
-if(msg.length > 200){
-msg = msg.slice(0,200) + "…";
-}
+/* ★ここが重要：200文字制限 */
+msg = limitText(msg);
 
 push(ref(db,"chat/"+currentRoom),{
 userId,
-name:username,
-text:msg,
-time:Date.now()
+name: username,
+text: msg,
+time: Date.now()
 });
 
-input.value="";
+document.getElementById("msg").value="";
 }
 
 document.getElementById("sendBtn").onclick = sendMsg;
 
-/* Enter送信 */
+/* Enter */
 document.getElementById("msg").addEventListener("keydown",(e)=>{
 if(e.key==="Enter"){
 e.preventDefault();
@@ -262,22 +246,21 @@ sendMsg();
 
 /* 👤 オンライン */
 onValue(ref(db,"users"),(snap)=>{
-
 users = snap.val() || {};
 
-let online="";
+let onlineList = [];
 
 Object.keys(users).forEach(id=>{
-if(users[id]?.online){
-online += (users[id].name || "名無し") + " ";
+if(users[id]?.online && users[id]?.name){
+onlineList.push(users[id].name);
 }
 });
 
-document.getElementById("online").innerText = online;
-
+document.getElementById("online").innerText =
+onlineList.join(" ") || "なし";
 });
 
-/* 💬 チャット受信 */
+/* 💬 チャット */
 function listenRoom(){
 
 if(chatStarted) return;
@@ -286,18 +269,15 @@ chatStarted = true;
 onChildAdded(ref(db,"chat/"+currentRoom),(snap)=>{
 
 const d = snap.val();
-const u = users?.[d.userId];
+if(!d) return;
 
-const icon = u?.icon || "https://via.placeholder.com/30";
-
-const text = (d.text?.length > 200)
-? d.text.slice(0,200) + "…"
-: d.text;
+const u = users?.[d.userId] || {};
+const icon = u.icon || "https://via.placeholder.com/30";
 
 const div = document.createElement("div");
 div.innerHTML =
-"<img src='"+icon+"' width='20' style='border-radius:50%'> " +
-"<b>"+(d.name || "名無し")+"</b>: "+text;
+`<img src="${icon}" width="20" style="border-radius:50%">
+ <b>${d.name || "名無し"}</b>: ${d.text || ""}`;
 
 document.getElementById("messages").appendChild(div);
 
