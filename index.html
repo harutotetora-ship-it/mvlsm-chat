@@ -70,9 +70,13 @@ border-radius:10px;
 
 <h2>チャット</h2>
 
-<!-- 🖼 アイコンURL -->
-<input id="iconUrl" placeholder="アイコン画像URL">
-<button onclick="setIcon()">アイコン設定</button>
+<!-- 🖼 アイコン設定 -->
+<button onclick="showIconBox()">アイコンを設定</button>
+
+<div id="iconBox" style="display:none;">
+<input id="iconInput" placeholder="画像URLを貼る">
+<button onclick="setIcon()">決定</button>
+</div>
 
 <div id="messages"></div>
 
@@ -134,9 +138,14 @@ time: Date.now()
 document.getElementById("msg").value="";
 };
 
-// 🖼 アイコン設定（URL）
+// 🖼 アイコン入力欄表示
+window.showIconBox = function(){
+document.getElementById("iconBox").style.display = "block";
+};
+
+// 🖼 アイコン保存（URL）
 window.setIcon = function(){
-const url = document.getElementById("iconUrl").value;
+const url = document.getElementById("iconInput").value;
 if(!url) return;
 
 localStorage.setItem("icon", url);
