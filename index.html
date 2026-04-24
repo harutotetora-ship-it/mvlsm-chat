@@ -115,10 +115,11 @@ const app = initializeApp(firebaseConfig);
 const db = getDatabase(app);
 
 let username = "名無し";
+let icons = {}; // ← ここでキャッシュ（超重要）
 
-/* =========================
+/* =====================
    🔐 ログイン
-========================= */
+===================== */
 document.getElementById("loginBtn").addEventListener("click", () => {
 
 let pass = document.getElementById("pass").value;
@@ -128,6 +129,7 @@ if(pass === "MvLO"){
 document.getElementById("login").style.display="none";
 document.getElementById("chat").style.display="block";
 
+// 初期アイコン
 set(ref(db,"icons/"+username),{
 icon:"https://via.placeholder.com/30"
 });
@@ -138,9 +140,9 @@ document.getElementById("error").innerText="パスワードが違います";
 
 });
 
-/* =========================
-   🖼 アイコン
-========================= */
+/* =====================
+   🖼 アイコン設定
+===================== */
 document.getElementById("iconBtn").addEventListener("click", () => {
 
 const url = document.getElementById("iconUrl").value;
@@ -151,11 +153,12 @@ icon:url
 });
 
 alert("アイコン設定完了！");
+
 });
 
-/* =========================
-   💬 送信関数
-========================= */
+/* =====================
+   💬 送信
+===================== */
 function sendMsg(){
 
 let msg = document.getElementById("msg").value;
@@ -170,14 +173,9 @@ time: Date.now()
 document.getElementById("msg").value="";
 }
 
-/* =========================
-   🔘 送信ボタン
-========================= */
 document.getElementById("sendBtn").addEventListener("click", sendMsg);
 
-/* =========================
-   ⌨️ Enter送信
-========================= */
+/* Enter送信 */
 document.getElementById("msg").addEventListener("keydown",(e)=>{
 if(e.key === "Enter"){
 e.preventDefault();
@@ -185,16 +183,21 @@ sendMsg();
 }
 });
 
-/* =========================
-   💬 表示
-========================= */
+/* =====================
+   🟢 アイコンキャッシュ
+===================== */
+onValue(ref(db,"icons"), (snap)=>{
+icons = snap.val() || {};
+});
+
+/* =====================
+   💬 メッセージ表示
+===================== */
 onChildAdded(ref(db,"chat"), (data)=>{
 
 let d = data.val();
 
-onValue(ref(db,"icons/"+d.name), (snap)=>{
-
-let icon = snap.val()?.icon || "https://via.placeholder.com/30";
+let icon = icons[d.name] || "https://via.placeholder.com/30";
 
 let p = document.createElement("p");
 
@@ -206,11 +209,9 @@ document.getElementById("messages").appendChild(p);
 
 });
 
-});
-
-/* =========================
-   🟢 オンライン
-========================= */
+/* =====================
+   🟢 オンライン表示
+===================== */
 onValue(ref(db,"icons"), (snap)=>{
 
 let data = snap.val() || {};
