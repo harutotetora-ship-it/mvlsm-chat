@@ -174,9 +174,7 @@ let currentRoom = "general";
 let users = {};
 let chatStarted = false;
 
-/* ======================
-   🔐 ログイン
-====================== */
+/* 🔐 ログイン */
 document.getElementById("loginBtn").onclick = () => {
 
 const pass = document.getElementById("pass").value;
@@ -190,7 +188,6 @@ return;
 document.getElementById("login").style.display="none";
 document.getElementById("layout").style.display="flex";
 
-/* ★完全保存（これが正解） */
 const uref = ref(db,"users/"+userId);
 
 set(uref,{
@@ -206,9 +203,7 @@ online:false
 
 };
 
-/* ======================
-   🏠 部屋切替
-====================== */
+/* 🏠 部屋切替 */
 window.switchRoom = function(room){
 
 currentRoom = room;
@@ -218,15 +213,12 @@ listenRoom();
 
 };
 
-/* ======================
-   🖼 アイコン変更
-====================== */
+/* 🖼 アイコン */
 document.getElementById("iconBtn").onclick = () => {
 
 const url = document.getElementById("iconUrl").value;
 if(!url) return;
 
-/* ★全部上書き方式 */
 set(ref(db,"users/"+userId),{
 name: username,
 icon: url,
@@ -235,13 +227,18 @@ online:true
 
 };
 
-/* ======================
-   💬 送信
-====================== */
+/* 💬 送信（200文字制限） */
 function sendMsg(){
 
-const msg = document.getElementById("msg").value;
+const input = document.getElementById("msg");
+let msg = input.value.trim();
+
 if(!msg) return;
+
+/* 🔥 200文字制限 */
+if(msg.length > 200){
+msg = msg.slice(0,200) + "…";
+}
 
 push(ref(db,"chat/"+currentRoom),{
 userId,
@@ -250,7 +247,7 @@ text:msg,
 time:Date.now()
 });
 
-document.getElementById("msg").value="";
+input.value="";
 }
 
 document.getElementById("sendBtn").onclick = sendMsg;
@@ -263,9 +260,7 @@ sendMsg();
 }
 });
 
-/* ======================
-   👤 ユーザー更新
-====================== */
+/* 👤 オンライン */
 onValue(ref(db,"users"),(snap)=>{
 
 users = snap.val() || {};
@@ -282,9 +277,7 @@ document.getElementById("online").innerText = online;
 
 });
 
-/* ======================
-   💬 チャット受信
-====================== */
+/* 💬 チャット受信 */
 function listenRoom(){
 
 if(chatStarted) return;
@@ -297,10 +290,14 @@ const u = users?.[d.userId];
 
 const icon = u?.icon || "https://via.placeholder.com/30";
 
+const text = (d.text?.length > 200)
+? d.text.slice(0,200) + "…"
+: d.text;
+
 const div = document.createElement("div");
 div.innerHTML =
 "<img src='"+icon+"' width='20' style='border-radius:50%'> " +
-"<b>"+(d.name || "名無し")+"</b>: "+d.text;
+"<b>"+(d.name || "名無し")+"</b>: "+text;
 
 document.getElementById("messages").appendChild(div);
 
