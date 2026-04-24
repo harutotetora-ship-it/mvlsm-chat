@@ -67,7 +67,7 @@ margin-bottom:10px;
 <br>
 <input type="password" id="pass" placeholder="パスワード">
 <br>
-<button onclick="login()">入室</button>
+<button id="loginBtn">入室</button>
 <p id="error"></p>
 </div>
 
@@ -78,15 +78,13 @@ margin-bottom:10px;
 
 <div id="online"></div>
 
-<!-- 🖼 アイコン -->
 <input id="iconUrl" placeholder="アイコンURL">
-<button onclick="setIcon()">アイコン設定</button>
-
-<!-- 💬 入力 -->
-<input id="msg" placeholder="メッセージ">
-<button id="sendBtn">送信</button>
+<button id="iconBtn">アイコン設定</button>
 
 <div id="messages"></div>
+
+<input id="msg" placeholder="メッセージ">
+<button id="sendBtn">送信</button>
 
 </div>
 
@@ -118,8 +116,11 @@ const db = getDatabase(app);
 
 let username = "名無し";
 
-// 🧠 windowに出す（重要）
-window.login = function(){
+/* =========================
+   🔐 ログイン
+========================= */
+document.getElementById("loginBtn").addEventListener("click", () => {
+
 let pass = document.getElementById("pass").value;
 username = document.getElementById("name").value || "名無し";
 
@@ -127,28 +128,36 @@ if(pass === "MvLO"){
 document.getElementById("login").style.display="none";
 document.getElementById("chat").style.display="block";
 
-// 初期アイコン
-set(ref(db,"icons/"+username), {
-icon: "https://via.placeholder.com/30"
+set(ref(db,"icons/"+username),{
+icon:"https://via.placeholder.com/30"
 });
 
 }else{
 document.getElementById("error").innerText="パスワードが違います";
 }
-};
 
-window.setIcon = function(){
+});
+
+/* =========================
+   🖼 アイコン
+========================= */
+document.getElementById("iconBtn").addEventListener("click", () => {
+
 const url = document.getElementById("iconUrl").value;
 if(!url) return;
 
-set(ref(db,"icons/"+username), {
-icon: url
+set(ref(db,"icons/"+username),{
+icon:url
 });
 
 alert("アイコン設定完了！");
-};
+});
 
-window.sendMsg = function(){
+/* =========================
+   💬 送信関数
+========================= */
+function sendMsg(){
+
 let msg = document.getElementById("msg").value;
 if(msg === "") return;
 
@@ -159,10 +168,28 @@ time: Date.now()
 });
 
 document.getElementById("msg").value="";
-};
+}
 
-// 💬 表示
+/* =========================
+   🔘 送信ボタン
+========================= */
+document.getElementById("sendBtn").addEventListener("click", sendMsg);
+
+/* =========================
+   ⌨️ Enter送信
+========================= */
+document.getElementById("msg").addEventListener("keydown",(e)=>{
+if(e.key === "Enter"){
+e.preventDefault();
+sendMsg();
+}
+});
+
+/* =========================
+   💬 表示
+========================= */
 onChildAdded(ref(db,"chat"), (data)=>{
+
 let d = data.val();
 
 onValue(ref(db,"icons/"+d.name), (snap)=>{
@@ -181,8 +208,11 @@ document.getElementById("messages").appendChild(p);
 
 });
 
-// 🟢 オンライン
+/* =========================
+   🟢 オンライン
+========================= */
 onValue(ref(db,"icons"), (snap)=>{
+
 let data = snap.val() || {};
 let box = document.getElementById("online");
 
@@ -191,31 +221,9 @@ box.innerHTML = "🟢 オンライン: ";
 Object.keys(data).forEach(name=>{
 box.innerHTML += name + " ";
 });
-});
-
-</script>
-
-<!-- ⌨️ Enter送信（安全版） -->
-<script>
-window.addEventListener("DOMContentLoaded", () => {
-
-const msg = document.getElementById("msg");
-const btn = document.getElementById("sendBtn");
-
-// ボタン送信（確実に動く）
-btn.addEventListener("click", function(){
-sendMsg();
-});
-
-// Enter送信
-msg.addEventListener("keydown", function(e){
-if(e.key === "Enter"){
-e.preventDefault();
-sendMsg();
-}
-});
 
 });
+
 </script>
 
 </body>
