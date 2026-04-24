@@ -18,6 +18,7 @@ display:flex;
 height:100vh;
 }
 
+/* サイドバー */
 #sidebar{
 width:180px;
 background:#2b2d31;
@@ -40,6 +41,7 @@ cursor:pointer;
 background:#5865f2;
 }
 
+/* チャット */
 #chatArea{
 flex:1;
 display:flex;
@@ -83,6 +85,7 @@ color:white;
 cursor:pointer;
 }
 
+/* ログイン */
 #login{
 max-width:300px;
 margin:100px auto;
@@ -104,6 +107,7 @@ border:none;
 
 <body>
 
+<!-- 🔐 ログイン -->
 <div id="login">
 <h2>MVLsmチャット</h2>
 <input id="name" placeholder="名前">
@@ -112,6 +116,7 @@ border:none;
 <p id="error"></p>
 </div>
 
+<!-- 💬 本体 -->
 <div id="layout" style="display:none;">
 
 <div id="sidebar">
@@ -128,6 +133,13 @@ border:none;
 
 <div id="messages"></div>
 
+<!-- アイコン設定 -->
+<div style="padding:5px; background:#2b2d31;">
+<input id="iconUrl" placeholder="アイコンURL">
+<button id="iconBtn">アイコン設定</button>
+</div>
+
+<!-- 入力 -->
 <div id="inputArea">
 <input id="msg" placeholder="メッセージ">
 <button id="sendBtn">送信</button>
@@ -168,7 +180,9 @@ let currentRoom = "zatsudan";
 let users = {};
 let chatStarted = false;
 
-/* ログイン */
+/* =====================
+   🔐 ログイン
+===================== */
 document.getElementById("loginBtn").onclick = () => {
 
 const pass = document.getElementById("pass").value;
@@ -197,7 +211,9 @@ online:false
 
 };
 
-/* 部屋切替 */
+/* =====================
+   🏠 部屋切替
+===================== */
 window.switchRoom = function(room){
 currentRoom = room;
 document.getElementById("messages").innerHTML="";
@@ -205,7 +221,21 @@ chatStarted = false;
 listenRoom();
 };
 
-/* 送信 */
+/* =====================
+   🖼 アイコン変更
+===================== */
+document.getElementById("iconBtn").onclick = () => {
+
+const url = document.getElementById("iconUrl").value;
+if(!url) return;
+
+set(ref(db,"users/"+userId+"/icon"), url);
+
+};
+
+/* =====================
+   💬 送信
+===================== */
 function sendMsg(){
 
 const msg = document.getElementById("msg").value;
@@ -223,7 +253,16 @@ document.getElementById("msg").value="";
 
 document.getElementById("sendBtn").onclick = sendMsg;
 
-/* オンライン */
+document.getElementById("msg").addEventListener("keydown",(e)=>{
+if(e.key==="Enter"){
+e.preventDefault();
+sendMsg();
+}
+});
+
+/* =====================
+   👤 オンライン表示
+===================== */
 onValue(ref(db,"users"),(snap)=>{
 
 users = snap.val() || {};
@@ -240,7 +279,9 @@ document.getElementById("online").innerText = online;
 
 });
 
-/* チャット */
+/* =====================
+   💬 チャット受信
+===================== */
 function listenRoom(){
 
 if(chatStarted) return;
@@ -249,9 +290,15 @@ chatStarted = true;
 onChildAdded(ref(db,"chat/"+currentRoom),(snap)=>{
 
 const d = snap.val();
+const u = users?.[d.userId];
+
+const icon = u?.icon || "https://via.placeholder.com/30";
+
 const div = document.createElement("div");
 
-div.innerHTML = "<b>"+d.name+"</b>: "+d.text;
+div.innerHTML =
+"<img src='"+icon+"' width='20' style='border-radius:50%;vertical-align:middle;margin-right:5px;'> " +
+"<b>"+d.name+"</b>: "+d.text;
 
 document.getElementById("messages").appendChild(div);
 
