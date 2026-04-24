@@ -115,10 +115,9 @@ border:none;
 <div id="layout" style="display:none;">
 
 <div id="sidebar">
-<h3>ROOM</h3>
-<button onclick="switchRoom('雑談')">#雑談</button>
-<button onclick="switchRoom('バグ報告')">#バグ報告</button>
-<button onclick="switchRoom('アップデート')">#アップデート</button>
+<button onclick="switchRoom('zatsudan')">⭐ 雑談</button>
+<button onclick="switchRoom('bug')">🐛 バグ報告</button>
+<button onclick="switchRoom('update')">📢 アップデート案</button>
 </div>
 
 <div id="chatArea">
@@ -130,7 +129,7 @@ border:none;
 <div id="messages"></div>
 
 <div id="inputArea">
-<input id="msg" placeholder="メッセージ（200文字まで）">
+<input id="msg" placeholder="メッセージ">
 <button id="sendBtn">送信</button>
 </div>
 
@@ -165,11 +164,11 @@ const db = getDatabase(app);
 
 const userId = crypto.randomUUID();
 let username = "名無し";
-let currentRoom = "general";
+let currentRoom = "zatsudan";
 let users = {};
 let chatStarted = false;
 
-/* 🔐 ログイン */
+/* ログイン */
 document.getElementById("loginBtn").onclick = () => {
 
 const pass = document.getElementById("pass").value;
@@ -183,7 +182,6 @@ return;
 document.getElementById("login").style.display="none";
 document.getElementById("layout").style.display="flex";
 
-/* ユーザー登録 */
 const uref = ref(db,"users/"+userId);
 
 set(uref,{
@@ -199,36 +197,25 @@ online:false
 
 };
 
-/* 🏠 部屋 */
+/* 部屋切替 */
 window.switchRoom = function(room){
-
 currentRoom = room;
 document.getElementById("messages").innerHTML="";
 chatStarted = false;
 listenRoom();
-
 };
 
-/* 💬 200文字制限 */
-function limitText(text){
-if(!text) return "";
-return text.length > 200 ? text.slice(0,200) + "..." : text;
-}
-
-/* 💬 送信 */
+/* 送信 */
 function sendMsg(){
 
-let msg = document.getElementById("msg").value;
+const msg = document.getElementById("msg").value;
 if(!msg) return;
-
-/* ★ここが重要：200文字制限 */
-msg = limitText(msg);
 
 push(ref(db,"chat/"+currentRoom),{
 userId,
-name: username,
-text: msg,
-time: Date.now()
+name:username,
+text:msg,
+time:Date.now()
 });
 
 document.getElementById("msg").value="";
@@ -236,31 +223,24 @@ document.getElementById("msg").value="";
 
 document.getElementById("sendBtn").onclick = sendMsg;
 
-/* Enter */
-document.getElementById("msg").addEventListener("keydown",(e)=>{
-if(e.key==="Enter"){
-e.preventDefault();
-sendMsg();
-}
-});
-
-/* 👤 オンライン */
+/* オンライン */
 onValue(ref(db,"users"),(snap)=>{
+
 users = snap.val() || {};
 
-let onlineList = [];
+let online="";
 
 Object.keys(users).forEach(id=>{
-if(users[id]?.online && users[id]?.name){
-onlineList.push(users[id].name);
+if(users[id]?.online){
+online += (users[id].name || "名無し") + " ";
 }
 });
 
-document.getElementById("online").innerText =
-onlineList.join(" ") || "なし";
+document.getElementById("online").innerText = online;
+
 });
 
-/* 💬 チャット */
+/* チャット */
 function listenRoom(){
 
 if(chatStarted) return;
@@ -269,15 +249,9 @@ chatStarted = true;
 onChildAdded(ref(db,"chat/"+currentRoom),(snap)=>{
 
 const d = snap.val();
-if(!d) return;
-
-const u = users?.[d.userId] || {};
-const icon = u.icon || "https://via.placeholder.com/30";
-
 const div = document.createElement("div");
-div.innerHTML =
-`<img src="${icon}" width="20" style="border-radius:50%">
- <b>${d.name || "名無し"}</b>: ${d.text || ""}`;
+
+div.innerHTML = "<b>"+d.name+"</b>: "+d.text;
 
 document.getElementById("messages").appendChild(div);
 
