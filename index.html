@@ -14,7 +14,7 @@ text-align:center;
 }
 
 #login,#chat{
-max-width:500px;
+max-width:600px;
 margin:20px auto;
 background:white;
 padding:20px;
@@ -31,12 +31,13 @@ border:1px solid #ccc;
 }
 
 button{
-padding:10px 15px;
+padding:8px 12px;
 border:none;
 background:#4caf50;
 color:white;
 border-radius:10px;
 cursor:pointer;
+margin:2px;
 }
 
 #messages{
@@ -52,6 +53,10 @@ border-radius:10px;
 #online{
 font-size:14px;
 color:green;
+margin-bottom:10px;
+}
+
+#rooms{
 margin-bottom:10px;
 }
 </style>
@@ -77,6 +82,13 @@ margin-bottom:10px;
 <h2>チャット</h2>
 
 <div id="online"></div>
+
+<!-- 🏠 部屋 -->
+<div id="rooms">
+<button onclick="switchRoom('general')">#general</button>
+<button onclick="switchRoom('game')">#game</button>
+<button onclick="switchRoom('mvlsm')">#mvlsm</button>
+</div>
 
 <input id="iconUrl" placeholder="アイコンURL">
 <button id="iconBtn">アイコン設定</button>
@@ -115,14 +127,18 @@ const app = initializeApp(firebaseConfig);
 const db = getDatabase(app);
 
 /* =====================
-   👤 ユーザーID（本体）
+   👤 ユーザー
 ===================== */
 const userId = crypto.randomUUID();
 let username = "名無し";
 
+/* =====================
+   🏠 チャンネル
+===================== */
+let currentRoom = "general";
+
 /* キャッシュ */
 let users = {};
-let icons = {};
 
 /* =====================
    🔐 ログイン
@@ -133,49 +149,58 @@ const pass = document.getElementById("pass").value;
 username = document.getElementById("name").value || "名無し";
 
 if(pass !== "MvLO"){
-document.getElementById("error").innerText = "パスワードが違います";
+document.getElementById("error").innerText="パスワードが違います";
 return;
 }
 
-/* 画面切替 */
 document.getElementById("login").style.display="none";
 document.getElementById("chat").style.display="block";
 
-/* 👤 ユーザー登録（ID管理） */
+/* ユーザー登録 */
 set(ref(db,"users/"+userId),{
 name: username,
-icon: "https://via.placeholder.com/30",
-online: true
+icon:"https://via.placeholder.com/30",
+online:true
 });
 
-/* 🟢 オンライン管理 */
+/* オンライン管理 */
 const statusRef = ref(db,"users/"+userId);
 
 set(statusRef,{
 name: username,
-online: true,
-time: Date.now()
+online:true,
+time:Date.now()
 });
 
 onDisconnect(statusRef).set({
 name: username,
-online: false,
-time: Date.now()
+online:false,
+time:Date.now()
 });
 
 });
 
 /* =====================
-   🖼 アイコン設定
+   🏠 部屋切り替え
+===================== */
+window.switchRoom = function(room){
+
+currentRoom = room;
+document.getElementById("messages").innerHTML = "";
+
+listenRoom();
+
+}
+
+/* =====================
+   🖼 アイコン
 ===================== */
 document.getElementById("iconBtn").addEventListener("click", () => {
 
 const url = document.getElementById("iconUrl").value;
 if(!url) return;
 
-set(ref(db,"users/"+userId+"/icon"), url);
-
-alert("アイコン更新完了");
+set(ref(db,"users/"+userId+"/icon"),url);
 
 });
 
@@ -187,8 +212,8 @@ function sendMsg(){
 const msg = document.getElementById("msg").value;
 if(!msg) return;
 
-push(ref(db,"chat"),{
-userId: userId,
+push(ref(db,"chat/"+currentRoom),{
+userId,
 name: username,
 text: msg,
 time: Date.now()
@@ -199,45 +224,49 @@ document.getElementById("msg").value="";
 
 document.getElementById("sendBtn").addEventListener("click", sendMsg);
 
-/* Enter送信 */
 document.getElementById("msg").addEventListener("keydown",(e)=>{
-if(e.key === "Enter"){
+if(e.key==="Enter"){
 e.preventDefault();
 sendMsg();
 }
 });
 
 /* =====================
-   🧠 ユーザー情報キャッシュ
+   👤 ユーザーキャッシュ
 ===================== */
 onValue(ref(db,"users"), (snap)=>{
 users = snap.val() || {};
 });
 
 /* =====================
-   💬 チャット表示（ID基準）
+   💬 部屋リスナー
 ===================== */
-onChildAdded(ref(db,"chat"), (data)=>{
+function listenRoom(){
+
+onChildAdded(ref(db,"chat/"+currentRoom), (data)=>{
 
 const d = data.val();
-
 const u = users[d.userId];
 
 const icon = u?.icon || "https://via.placeholder.com/30";
-const name = d.name;
 
 const p = document.createElement("p");
 
 p.innerHTML =
 "<img src='"+icon+"' width='25' style='border-radius:50%'> " +
-"<b>"+name+"</b>: "+d.text;
+"<b>"+d.name+"</b>: "+d.text;
 
 document.getElementById("messages").appendChild(p);
 
 });
 
+}
+
+/* 初期ロード */
+listenRoom();
+
 /* =====================
-   🟢 オンライン表示（完全修正版）
+   🟢 オンライン表示
 ===================== */
 onValue(ref(db,"users"), (snap)=>{
 
