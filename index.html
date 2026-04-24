@@ -116,6 +116,9 @@ const db = getDatabase(app);
 
 let username = "名無し";
 
+// 🧠 アイコンキャッシュ（重要）
+let iconCache = {};
+
 // 🔐 ログイン
 window.login = function(){
 let pass = document.getElementById("pass").value;
@@ -161,22 +164,27 @@ time: Date.now()
 document.getElementById("msg").value="";
 };
 
-// 📡 表示（順番修正済み）
+// 🖼 アイコンをまとめて取得（キャッシュ）
+onValue(ref(db,"icons"), (snap)=>{
+iconCache = snap.val() || {};
+});
+
+// 💬 チャット表示（安定版）
 onValue(ref(db,"chat"), (snap)=>{
 let data = snap.val() || {};
 
 let list = Object.values(data);
 
-// ⬇ 時間順ソート（重要）
+// 時間順
 list.sort((a,b)=>a.time - b.time);
 
-document.getElementById("messages").innerHTML = "";
+let box = document.getElementById("messages");
+box.innerHTML = "";
 
 list.forEach(d=>{
 
-onValue(ref(db,"icons/"+d.name), (iconSnap)=>{
-
-let icon = iconSnap.val()?.icon || "https://via.placeholder.com/30";
+let icon = iconCache[d.name]?.icon
+|| "https://via.placeholder.com/30";
 
 let p = document.createElement("p");
 
@@ -184,11 +192,10 @@ p.innerHTML =
 "<img src='"+icon+"' width='25' style='border-radius:50%'> " +
 "<b>"+d.name+"</b>: "+d.text;
 
-document.getElementById("messages").appendChild(p);
+box.appendChild(p);
 
 });
 
-});
 });
 
 // 🟢 オンライン表示
