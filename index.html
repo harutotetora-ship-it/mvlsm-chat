@@ -100,7 +100,7 @@ border-radius:5px;
 border:none;
 }
 
-/* アイコンエリア */
+/* アイコン */
 #iconArea{
 padding:8px;
 background:#202225;
@@ -199,8 +199,9 @@ let username = "名無し";
 let currentRoom = "zatsudan";
 let users = {};
 
-/* 🔥 これが超重要（リスナー管理） */
+/* 🔥 リスナー管理 */
 let chatRef = null;
+let chatHandler = null;
 
 /* =====================
    ログイン
@@ -234,17 +235,16 @@ online:false
 };
 
 /* =====================
-   部屋切替
+   部屋切替（重要）
 ===================== */
 window.switchRoom = function(room){
 
 currentRoom = room;
 document.getElementById("messages").innerHTML="";
 
-/* ★前のリスナー完全停止 */
-if(chatRef){
-off(chatRef);
-chatRef = null;
+/* 🔥 完全停止 */
+if(chatRef && chatHandler){
+off(chatRef, "child_added", chatHandler);
 }
 
 listenRoom();
@@ -310,13 +310,13 @@ document.getElementById("online").innerText = online;
 });
 
 /* =====================
-   チャット（修正版）
+   チャット（完全修正版）
 ===================== */
 function listenRoom(){
 
 chatRef = ref(db,"chat/"+currentRoom);
 
-onChildAdded(chatRef,(snap)=>{
+chatHandler = (snap)=>{
 
 const d = snap.val();
 const u = users?.[d.userId];
@@ -333,7 +333,9 @@ div.innerHTML =
 
 document.getElementById("messages").appendChild(div);
 
-});
+};
+
+onChildAdded(chatRef, chatHandler);
 
 }
 
