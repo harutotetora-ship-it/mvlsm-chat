@@ -59,6 +59,7 @@ margin-bottom:10px;
 
 <body>
 
+<!-- 🔐 ログイン -->
 <div id="login">
 <h2>MVLsmチャット</h2>
 
@@ -70,6 +71,7 @@ margin-bottom:10px;
 <p id="error"></p>
 </div>
 
+<!-- 💬 チャット -->
 <div id="chat" style="display:none;">
 
 <h2>チャット</h2>
@@ -92,8 +94,8 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebas
 import {
 getDatabase,
 ref,
-push,
 set,
+push,
 onValue,
 onChildAdded,
 onDisconnect
@@ -113,11 +115,13 @@ const app = initializeApp(firebaseConfig);
 const db = getDatabase(app);
 
 /* =====================
-   👤 ユーザー情報
+   👤 ユーザーID（本体）
 ===================== */
+const userId = crypto.randomUUID();
 let username = "名無し";
-const userId = crypto.randomUUID(); // ★これが重要（バグ解決）
 
+/* キャッシュ */
+let users = {};
 let icons = {};
 
 /* =====================
@@ -125,39 +129,39 @@ let icons = {};
 ===================== */
 document.getElementById("loginBtn").addEventListener("click", () => {
 
-let pass = document.getElementById("pass").value;
+const pass = document.getElementById("pass").value;
 username = document.getElementById("name").value || "名無し";
 
-if(pass === "MvLO"){
+if(pass !== "MvLO"){
+document.getElementById("error").innerText = "パスワードが違います";
+return;
+}
 
+/* 画面切替 */
 document.getElementById("login").style.display="none";
 document.getElementById("chat").style.display="block";
 
-/* アイコン初期化 */
-set(ref(db,"icons/"+userId),{
+/* 👤 ユーザー登録（ID管理） */
+set(ref(db,"users/"+userId),{
 name: username,
-icon:"https://via.placeholder.com/30"
+icon: "https://via.placeholder.com/30",
+online: true
 });
 
-/* 🟢 オンライン登録（ID管理） */
-const statusRef = ref(db,"status/"+userId);
+/* 🟢 オンライン管理 */
+const statusRef = ref(db,"users/"+userId);
 
 set(statusRef,{
-online:true,
 name: username,
+online: true,
 time: Date.now()
 });
 
-/* 切断時に自動オフライン */
 onDisconnect(statusRef).set({
-online:false,
 name: username,
+online: false,
 time: Date.now()
 });
-
-}else{
-document.getElementById("error").innerText="パスワードが違います";
-}
 
 });
 
@@ -169,12 +173,9 @@ document.getElementById("iconBtn").addEventListener("click", () => {
 const url = document.getElementById("iconUrl").value;
 if(!url) return;
 
-set(ref(db,"icons/"+userId),{
-name: username,
-icon:url
-});
+set(ref(db,"users/"+userId+"/icon"), url);
 
-alert("アイコン設定完了！");
+alert("アイコン更新完了");
 
 });
 
@@ -183,10 +184,11 @@ alert("アイコン設定完了！");
 ===================== */
 function sendMsg(){
 
-let msg = document.getElementById("msg").value;
-if(msg === "") return;
+const msg = document.getElementById("msg").value;
+if(!msg) return;
 
 push(ref(db,"chat"),{
+userId: userId,
 name: username,
 text: msg,
 time: Date.now()
@@ -206,45 +208,41 @@ sendMsg();
 });
 
 /* =====================
-   🖼 アイコンキャッシュ
+   🧠 ユーザー情報キャッシュ
 ===================== */
-onValue(ref(db,"icons"), (snap)=>{
-icons = snap.val() || {};
+onValue(ref(db,"users"), (snap)=>{
+users = snap.val() || {};
 });
 
 /* =====================
-   💬 チャット表示
+   💬 チャット表示（ID基準）
 ===================== */
 onChildAdded(ref(db,"chat"), (data)=>{
 
-let d = data.val();
+const d = data.val();
 
-let icon = "https://via.placeholder.com/30";
+const u = users[d.userId];
 
-/* userIdからアイコン探す */
-Object.keys(icons).forEach(id=>{
-if(icons[id].name === d.name){
-icon = icons[id].icon;
-}
-});
+const icon = u?.icon || "https://via.placeholder.com/30";
+const name = d.name;
 
-let p = document.createElement("p");
+const p = document.createElement("p");
 
 p.innerHTML =
 "<img src='"+icon+"' width='25' style='border-radius:50%'> " +
-"<b>"+d.name+"</b>: "+d.text;
+"<b>"+name+"</b>: "+d.text;
 
 document.getElementById("messages").appendChild(p);
 
 });
 
 /* =====================
-   🟢 オンライン表示（修正版）
+   🟢 オンライン表示（完全修正版）
 ===================== */
-onValue(ref(db,"status"), (snap)=>{
+onValue(ref(db,"users"), (snap)=>{
 
-let data = snap.val() || {};
-let box = document.getElementById("online");
+const data = snap.val() || {};
+const box = document.getElementById("online");
 
 box.innerHTML = "🟢 オンライン: ";
 
