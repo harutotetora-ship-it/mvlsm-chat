@@ -115,8 +115,6 @@ const app = initializeApp(firebaseConfig);
 const db = getDatabase(app);
 
 let username = "名無し";
-
-// 🧠 アイコンキャッシュ（重要）
 let iconCache = {};
 
 // 🔐 ログイン
@@ -128,7 +126,7 @@ if(pass === "MvLO"){
 document.getElementById("login").style.display="none";
 document.getElementById("chat").style.display="block";
 
-// デフォルトアイコン
+// 初期アイコン
 set(ref(db,"icons/"+username), {
 icon: "https://via.placeholder.com/30"
 });
@@ -164,7 +162,7 @@ time: Date.now()
 document.getElementById("msg").value="";
 };
 
-// 🖼 アイコンをまとめて取得（キャッシュ）
+// 🟡 アイコンまとめ取得
 onValue(ref(db,"icons"), (snap)=>{
 iconCache = snap.val() || {};
 });
@@ -174,8 +172,6 @@ onValue(ref(db,"chat"), (snap)=>{
 let data = snap.val() || {};
 
 let list = Object.values(data);
-
-// 時間順
 list.sort((a,b)=>a.time - b.time);
 
 let box = document.getElementById("messages");
@@ -193,7 +189,6 @@ p.innerHTML =
 "<b>"+d.name+"</b>: "+d.text;
 
 box.appendChild(p);
-
 });
 
 });
@@ -210,6 +205,16 @@ box.innerHTML += name + " ";
 });
 });
 
+</script>
+
+<!-- ⌨️ Enter送信 -->
+<script>
+document.getElementById("msg").addEventListener("keydown", function(e){
+if(e.key === "Enter"){
+e.preventDefault();
+sendMsg();
+}
+});
 </script>
 
 </body>
