@@ -10,13 +10,12 @@ body{
 font-family:sans-serif;
 background:#f5f5f5;
 margin:0;
-padding:0;
 text-align:center;
 }
 
 #login,#chat{
 max-width:500px;
-margin:30px auto;
+margin:20px auto;
 background:white;
 padding:20px;
 border-radius:15px;
@@ -26,13 +25,13 @@ box-shadow:0 0 10px rgba(0,0,0,0.1);
 input{
 width:90%;
 padding:10px;
-margin:8px;
-border:1px solid #ccc;
+margin:5px;
 border-radius:10px;
+border:1px solid #ccc;
 }
 
 button{
-padding:10px 20px;
+padding:10px 15px;
 border:none;
 background:#4caf50;
 color:white;
@@ -46,9 +45,8 @@ overflow-y:auto;
 border:1px solid #ddd;
 padding:10px;
 text-align:left;
-margin-bottom:10px;
-border-radius:10px;
 background:#fafafa;
+border-radius:10px;
 }
 </style>
 </head>
@@ -57,21 +55,30 @@ background:#fafafa;
 
 <!-- 🔐 ログイン -->
 <div id="login">
-<h1>MVLsmチャット</h1>
-<input type="text" id="name" placeholder="名前（空なら名無し）"><br>
-<input type="password" id="pass" placeholder="パスワード"><br>
+<h2>MVLsmチャット</h2>
+
+<input id="name" placeholder="名前">
+<br>
+<input type="password" id="pass" placeholder="パスワード">
+<br>
 <button onclick="login()">入室</button>
 <p id="error"></p>
 </div>
 
 <!-- 💬 チャット -->
 <div id="chat" style="display:none;">
-<h2>MVLsmチャット</h2>
+
+<h2>チャット</h2>
+
+<!-- 🖼 アイコンURL -->
+<input id="iconUrl" placeholder="アイコン画像URL">
+<button onclick="setIcon()">アイコン設定</button>
 
 <div id="messages"></div>
 
-<input type="text" id="msg" placeholder="メッセージ入力">
+<input id="msg" placeholder="メッセージ">
 <button onclick="sendMsg()">送信</button>
+
 </div>
 
 <!-- 🚀 Firebase -->
@@ -85,7 +92,6 @@ push,
 onChildAdded
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
 
-// 🔥 Firebase設定
 const firebaseConfig = {
 apiKey: "AIzaSyARMFFYzOfZlptX72yn17AqCrXq3vyKK1s",
 authDomain: "smtyatto.firebaseapp.com",
@@ -93,54 +99,68 @@ databaseURL: "https://smtyatto-default-rtdb.firebaseio.com",
 projectId: "smtyatto",
 storageBucket: "smtyatto.firebasestorage.app",
 messagingSenderId: "720432898013",
-appId: "1:720432898013:web:3fc9bb90082235ab506034",
-measurementId: "G-2NJNZJ46K0"
+appId: "1:720432898013:web:3fc9bb90082235ab506034"
 };
 
 const app = initializeApp(firebaseConfig);
 const db = getDatabase(app);
 
-// 👤 ユーザー名
 let username = "名無し";
 
-// 🔐 ログイン（そのまま残す）
+// 🔐 ログイン
 window.login = function(){
 let pass = document.getElementById("pass").value;
 username = document.getElementById("name").value || "名無し";
 
 if(pass === "MvLO"){
-document.getElementById("login").style.display = "none";
-document.getElementById("chat").style.display = "block";
+document.getElementById("login").style.display="none";
+document.getElementById("chat").style.display="block";
 }else{
-document.getElementById("error").innerText = "パスワードが違います";
+document.getElementById("error").innerText="パスワードが違います";
 }
 };
 
-// 💬 送信（Firebase版）
+// 💬 送信
 window.sendMsg = function(){
 let msg = document.getElementById("msg").value;
 if(msg === "") return;
 
-push(ref(db, "chat"), {
+push(ref(db,"chat"),{
 name: username,
 text: msg,
 time: Date.now()
 });
 
-document.getElementById("msg").value = "";
+document.getElementById("msg").value="";
 };
 
-// 📡 受信（リアルタイム）
-onChildAdded(ref(db, "chat"), (data) => {
+// 🖼 アイコン設定（URL）
+window.setIcon = function(){
+const url = document.getElementById("iconUrl").value;
+if(!url) return;
+
+localStorage.setItem("icon", url);
+
+alert("アイコン設定完了！");
+};
+
+// 📡 受信
+onChildAdded(ref(db,"chat"), (data)=>{
 let d = data.val();
 
-let div = document.createElement("p");
-div.innerHTML = "<b>" + d.name + "</b>: " + d.text;
+let icon = localStorage.getItem("icon")
+|| "https://via.placeholder.com/30";
 
-document.getElementById("messages").appendChild(div);
+let p = document.createElement("p");
 
-let box = document.getElementById("messages");
-box.scrollTop = box.scrollHeight;
+p.innerHTML =
+"<img src='"+icon+"' width='25' style='border-radius:50%'> " +
+"<b>"+d.name+"</b>: "+d.text;
+
+document.getElementById("messages").appendChild(p);
+
+document.getElementById("messages").scrollTop =
+document.getElementById("messages").scrollHeight;
 });
 
 </script>
