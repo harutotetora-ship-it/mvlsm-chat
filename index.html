@@ -13,24 +13,17 @@ background:#1e1f22;
 color:white;
 }
 
-/* 全体 */
 #layout{
 display:flex;
 height:100vh;
 }
 
-/* 左サイドバー */
+/* 左 */
 #sidebar{
-width:180px;
+width:200px;
 background:#2b2d31;
 padding:10px;
 box-sizing:border-box;
-}
-
-#sidebar h3{
-margin:5px 0;
-font-size:14px;
-color:#aaa;
 }
 
 #sidebar button{
@@ -48,7 +41,13 @@ cursor:pointer;
 background:#5865f2;
 }
 
-/* 右チャット */
+#sidebar input{
+width:100%;
+padding:6px;
+margin-top:10px;
+}
+
+/* 右 */
 #chatArea{
 flex:1;
 display:flex;
@@ -56,21 +55,18 @@ flex-direction:column;
 background:#313338;
 }
 
-/* 上部 */
 #topBar{
 padding:10px;
 background:#2b2d31;
 font-size:14px;
 }
 
-/* メッセージ */
 #messages{
 flex:1;
 overflow-y:auto;
 padding:10px;
 }
 
-/* 入力 */
 #inputArea{
 display:flex;
 padding:10px;
@@ -95,7 +91,6 @@ color:white;
 cursor:pointer;
 }
 
-/* ログイン */
 #login{
 max-width:300px;
 margin:100px auto;
@@ -126,15 +121,23 @@ border:none;
 <p id="error"></p>
 </div>
 
-<!-- 💬 チャット -->
+<!-- 💬 メイン -->
 <div id="layout" style="display:none;">
 
 <!-- 左 -->
 <div id="sidebar">
 <h3>ROOM</h3>
-<button onclick="switchRoom('バグ報告')">#general</button>
-<button onclick="switchRoom('雑談')">#game</button>
-<button onclick="switchRoom('mvl系')">#mvlsm</button>
+
+<button onclick="switchRoom('general')">#general</button>
+<button onclick="switchRoom('game')">#game</button>
+<button onclick="switchRoom('mvlsm')">#mvlsm</button>
+
+<hr>
+
+<!-- 🧑‍💼 管理者用 -->
+<input id="roomName" placeholder="部屋名">
+<button onclick="createRoom()">部屋作成</button>
+
 </div>
 
 <!-- 右 -->
@@ -146,17 +149,13 @@ border:none;
 
 <div id="messages"></div>
 
-<div style="padding:5px;">
-<input id="iconUrl" placeholder="アイコンURL">
-<button id="iconBtn">アイコン</button>
-</div>
-
 <div id="inputArea">
 <input id="msg" placeholder="メッセージ">
 <button id="sendBtn">送信</button>
 </div>
 
 </div>
+
 </div>
 
 <script type="module">
@@ -186,14 +185,23 @@ const app = initializeApp(firebaseConfig);
 const db = getDatabase(app);
 
 /* =====================
-   👤 ユーザーID
+   👤 ユーザー
 ===================== */
-const userId = crypto.randomUUID();
-let username = "名無し";
+const userId = localStorage.getItem("uid") || crypto.randomUUID();
+localStorage.setItem("uid", userId);
 
-/* 🏠 部屋 */
+let username = "名無し";
 let currentRoom = "general";
 let users = {};
+
+/* 🧑‍💼 管理者ID（ここ重要） */
+const adminIds = [
+  "あなたのuserIdをここに入れる"
+];
+
+function isAdmin(){
+return adminIds.includes(userId);
+}
 
 /* =====================
    🔐 ログイン
@@ -204,7 +212,7 @@ const pass = document.getElementById("pass").value;
 username = document.getElementById("name").value || "名無し";
 
 if(pass !== "MvLO"){
-document.getElementById("error").innerText="パスワードミス";
+document.getElementById("error").innerText="パスワード違う";
 return;
 }
 
@@ -214,11 +222,9 @@ document.getElementById("layout").style.display="flex";
 /* ユーザー登録 */
 set(ref(db,"users/"+userId),{
 name: username,
-icon:"https://via.placeholder.com/30",
 online:true
 });
 
-/* オンライン維持 */
 const uref = ref(db,"users/"+userId);
 
 set(uref,{
@@ -240,20 +246,32 @@ window.switchRoom = function(room){
 
 currentRoom = room;
 document.getElementById("messages").innerHTML="";
-
 listenRoom();
 
 };
 
 /* =====================
-   🖼 アイコン
+   ➕ 部屋作成（管理者のみ）
 ===================== */
-document.getElementById("iconBtn").onclick = () => {
+window.createRoom = function(){
 
-const url = document.getElementById("iconUrl").value;
-if(!url) return;
+if(!isAdmin()){
+alert("管理者のみ作成できます");
+return;
+}
 
-set(ref(db,"users/"+userId+"/icon"),url);
+const name = document.getElementById("roomName").value;
+if(!name) return;
+
+switchRoom(name);
+
+const btn = document.createElement("button");
+btn.innerText = "#"+name;
+btn.onclick = ()=> switchRoom(name);
+
+document.getElementById("sidebar").appendChild(btn);
+
+document.getElementById("roomName").value="";
 
 };
 
@@ -278,7 +296,6 @@ document.getElementById("msg").value="";
 
 document.getElementById("sendBtn").onclick = sendMsg;
 
-/* Enter送信 */
 document.getElementById("msg").addEventListener("keydown",(e)=>{
 if(e.key==="Enter"){
 e.preventDefault();
@@ -287,7 +304,7 @@ sendMsg();
 });
 
 /* =====================
-   👤 ユーザー情報
+   👤 ユーザー
 ===================== */
 onValue(ref(db,"users"),(snap)=>{
 users = snap.val()||{};
@@ -310,13 +327,10 @@ function listenRoom(){
 onChildAdded(ref(db,"chat/"+currentRoom),(snap)=>{
 
 const d = snap.val();
-const u = users[d.userId];
-
-const icon = u?.icon || "https://via.placeholder.com/30";
 
 const div = document.createElement("div");
+
 div.innerHTML =
-"<img src='"+icon+"' width='20' style='border-radius:50%'> " +
 "<b>"+d.name+"</b>: "+d.text;
 
 document.getElementById("messages").appendChild(div);
@@ -325,7 +339,6 @@ document.getElementById("messages").appendChild(div);
 
 }
 
-/* 初期 */
 listenRoom();
 
 </script>
