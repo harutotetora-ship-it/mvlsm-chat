@@ -20,7 +20,7 @@ height:100vh;
 
 /* 左 */
 #sidebar{
-width:200px;
+width:220px;
 background:#2b2d31;
 padding:10px;
 box-sizing:border-box;
@@ -41,10 +41,12 @@ cursor:pointer;
 background:#5865f2;
 }
 
-#sidebar input{
+input{
 width:100%;
-padding:6px;
-margin-top:10px;
+padding:8px;
+margin-top:5px;
+border-radius:5px;
+border:none;
 }
 
 /* 右 */
@@ -55,7 +57,7 @@ flex-direction:column;
 background:#313338;
 }
 
-#topBar{
+#top{
 padding:10px;
 background:#2b2d31;
 font-size:14px;
@@ -99,14 +101,6 @@ padding:20px;
 border-radius:10px;
 text-align:center;
 }
-
-input{
-width:90%;
-padding:10px;
-margin:5px;
-border-radius:5px;
-border:none;
-}
 </style>
 </head>
 
@@ -115,35 +109,44 @@ border:none;
 <!-- 🔐 ログイン -->
 <div id="login">
 <h2>MVLsmチャット</h2>
+
 <input id="name" placeholder="名前">
 <input type="password" id="pass" placeholder="パスワード">
-<button id="loginBtn">入室</button>
+<button onclick="login()">入室</button>
 <p id="error"></p>
 </div>
 
-<!-- 💬 メイン -->
+<!-- 💬 本体 -->
 <div id="layout" style="display:none;">
 
 <!-- 左 -->
 <div id="sidebar">
 <h3>ROOM</h3>
 
-<button onclick="switchRoom('general')">#general</button>
-<button onclick="switchRoom('game')">#game</button>
-<button onclick="switchRoom('mvlsm')">#mvlsm</button>
+<button onclick="switchRoom('general')">#バグ報告</button>
+<button onclick="switchRoom('game')">#雑談</button>
 
 <hr>
 
-<!-- 🧑‍💼 管理者用 -->
 <input id="roomName" placeholder="部屋名">
 <button onclick="createRoom()">部屋作成</button>
+
+<hr>
+
+<h4>管理者</h4>
+<input id="adminPass" placeholder="管理者パスワード">
+<button onclick="adminLogin()">管理者認証</button>
+
+<input id="target" placeholder="対象ユーザー">
+<button onclick="kickUser()">KICK</button>
+<button onclick="banUser()">BAN</button>
 
 </div>
 
 <!-- 右 -->
 <div id="chatArea">
 
-<div id="topBar">
+<div id="top">
 🟢 オンライン: <span id="online"></span>
 </div>
 
@@ -151,7 +154,7 @@ border:none;
 
 <div id="inputArea">
 <input id="msg" placeholder="メッセージ">
-<button id="sendBtn">送信</button>
+<button onclick="sendMsg()">送信</button>
 </div>
 
 </div>
@@ -167,8 +170,7 @@ ref,
 set,
 push,
 onValue,
-onChildAdded,
-onDisconnect
+onChildAdded
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
 
 const firebaseConfig = {
@@ -184,29 +186,14 @@ appId: "1:720432898013:web:3fc9bb90082235ab506034"
 const app = initializeApp(firebaseConfig);
 const db = getDatabase(app);
 
-/* =====================
-   👤 ユーザー
-===================== */
-const userId = localStorage.getItem("uid") || crypto.randomUUID();
-localStorage.setItem("uid", userId);
-
 let username = "名無し";
 let currentRoom = "general";
-let users = {};
-
-/* 🧑‍💼 管理者ID（ここ重要） */
-const adminIds = [
-  "あなたのuserIdをここに入れる"
-];
-
-function isAdmin(){
-return adminIds.includes(userId);
-}
+let isAdmin = false;
 
 /* =====================
    🔐 ログイン
 ===================== */
-document.getElementById("loginBtn").onclick = () => {
+window.login = function(){
 
 const pass = document.getElementById("pass").value;
 username = document.getElementById("name").value || "名無し";
@@ -220,43 +207,41 @@ document.getElementById("login").style.display="none";
 document.getElementById("layout").style.display="flex";
 
 /* ユーザー登録 */
-set(ref(db,"users/"+userId),{
-name: username,
+set(ref(db,"users/"+username),{
 online:true
-});
-
-const uref = ref(db,"users/"+userId);
-
-set(uref,{
-name:username,
-online:true
-});
-
-onDisconnect(uref).set({
-name:username,
-online:false
 });
 
 };
 
 /* =====================
-   🏠 部屋切替
+   🔑 管理者認証
+===================== */
+window.adminLogin = function(){
+
+const pass = document.getElementById("adminPass").value;
+
+/* ←ここが管理者パスワード */
+if(pass === "sm64はMvLOが好きだが弱すぎる人だった"){
+isAdmin = true;
+alert("管理者モードON");
+}else{
+alert("違います");
+}
+
+};
+
+/* =====================
+   🏠 部屋
 ===================== */
 window.switchRoom = function(room){
-
 currentRoom = room;
 document.getElementById("messages").innerHTML="";
 listenRoom();
-
 };
 
-/* =====================
-   ➕ 部屋作成（管理者のみ）
-===================== */
 window.createRoom = function(){
-
-if(!isAdmin()){
-alert("管理者のみ作成できます");
+if(!isAdmin){
+alert("管理者のみ");
 return;
 }
 
@@ -265,26 +250,17 @@ if(!name) return;
 
 switchRoom(name);
 
-const btn = document.createElement("button");
-btn.innerText = "#"+name;
-btn.onclick = ()=> switchRoom(name);
-
-document.getElementById("sidebar").appendChild(btn);
-
-document.getElementById("roomName").value="";
-
 };
 
 /* =====================
    💬 送信
 ===================== */
-function sendMsg(){
+window.sendMsg = function(){
 
 const msg = document.getElementById("msg").value;
 if(!msg) return;
 
 push(ref(db,"chat/"+currentRoom),{
-userId,
 name:username,
 text:msg,
 time:Date.now()
@@ -292,46 +268,39 @@ time:Date.now()
 
 document.getElementById("msg").value="";
 
-}
-
-document.getElementById("sendBtn").onclick = sendMsg;
-
-document.getElementById("msg").addEventListener("keydown",(e)=>{
-if(e.key==="Enter"){
-e.preventDefault();
-sendMsg();
-}
-});
+};
 
 /* =====================
-   👤 ユーザー
+   🚫 BAN / KICK
 ===================== */
-onValue(ref(db,"users"),(snap)=>{
-users = snap.val()||{};
+window.banUser = function(){
+if(!isAdmin) return;
 
-let online="";
-Object.keys(users).forEach(id=>{
-if(users[id].online){
-online += users[id].name+" ";
+const t = document.getElementById("target").value;
+set(ref(db,"banned/"+t),true);
+alert("BANした");
+};
+
+window.kickUser = function(){
+if(!isAdmin) return;
+
+const t = document.getElementById("target").value;
+if(t === username){
+location.reload();
 }
-});
-
-document.getElementById("online").innerText = online;
-});
+alert("KICKした");
+};
 
 /* =====================
-   💬 チャット受信
+   💬 受信
 ===================== */
 function listenRoom(){
 
 onChildAdded(ref(db,"chat/"+currentRoom),(snap)=>{
-
 const d = snap.val();
 
 const div = document.createElement("div");
-
-div.innerHTML =
-"<b>"+d.name+"</b>: "+d.text;
+div.innerHTML = "<b>"+d.name+"</b>: "+d.text;
 
 document.getElementById("messages").appendChild(div);
 
@@ -340,6 +309,20 @@ document.getElementById("messages").appendChild(div);
 }
 
 listenRoom();
+
+/* =====================
+   🟢 オンライン
+===================== */
+onValue(ref(db,"users"),(snap)=>{
+const data = snap.val() || {};
+
+let list="";
+Object.keys(data).forEach(u=>{
+list += u+" ";
+});
+
+document.getElementById("online").innerText = list;
+});
 
 </script>
 
