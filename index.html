@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MVLsmチャット</title>
+
+<style>
+body{
+font-family:sans-serif;
+background:#f5f5f5;
+margin:0;
+padding:0;
+text-align:center;
+}
+
+#login,#chat{
+max-width:500px;
+margin:30px auto;
+background:white;
+padding:20px;
+border-radius:15px;
+box-shadow:0 0 10px rgba(0,0,0,0.1);
+}
+
+input{
+width:90%;
+padding:10px;
+margin:8px;
+border:1px solid #ccc;
+border-radius:10px;
+}
+
+button{
+padding:10px 20px;
+border:none;
+background:#4caf50;
+color:white;
+border-radius:10px;
+cursor:pointer;
+}
+
+#messages{
+height:300px;
+overflow-y:auto;
+border:1px solid #ddd;
+padding:10px;
+text-align:left;
+margin-bottom:10px;
+border-radius:10px;
+background:#fafafa;
+}
+</style>
+</head>
+
+<body>
+
+<div id="login">
+<h1>MVLsmチャット</h1>
+<input type="text" id="name" placeholder="名前（空なら名無し）"><br>
+<input type="password" id="pass" placeholder="パスワード"><br>
+<button onclick="login()">入室</button>
+<p id="error"></p>
+</div>
+
+<div id="chat" style="display:none;">
+<h2>MVLsmチャット</h2>
+<div id="messages"></div>
+<input type="text" id="msg" placeholder="メッセージ入力">
+<button onclick="send()">送信</button>
+</div>
+
+<script>
+let username="名無し";
+
+function login(){
+let pass=document.getElementById("pass").value;
+username=document.getElementById("name").value || "名無し";
+
+if(pass==="MvLO"){
+document.getElementById("login").style.display="none";
+document.getElementById("chat").style.display="block";
+}else{
+document.getElementById("error").innerText="パスワードが違います";
+}
+}
+
+function send(){
+let msg=document.getElementById("msg").value;
+if(msg==="") return;
+
+let box=document.getElementById("messages");
+box.innerHTML += "<p><b>"+username+"</b>: "+msg+"</p>";
+document.getElementById("msg").value="";
+box.scrollTop=box.scrollHeight;
+}
+</script>
+
+</body>
+</html>
