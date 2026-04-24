@@ -78,7 +78,7 @@ margin-bottom:10px;
 
 <div id="online"></div>
 
-<!-- 🖼 アイコン設定 -->
+<!-- 🖼 アイコン -->
 <input id="iconUrl" placeholder="アイコンURL">
 <button onclick="setIcon()">アイコン設定</button>
 
@@ -97,7 +97,6 @@ import {
 getDatabase,
 ref,
 push,
-onChildAdded,
 set,
 onValue
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
@@ -126,7 +125,7 @@ if(pass === "MvLO"){
 document.getElementById("login").style.display="none";
 document.getElementById("chat").style.display="block";
 
-// 初期アイコン登録
+// デフォルトアイコン
 set(ref(db,"icons/"+username), {
 icon: "https://via.placeholder.com/30"
 });
@@ -136,7 +135,7 @@ document.getElementById("error").innerText="パスワードが違います";
 }
 };
 
-// 🖼 アイコン設定（ユーザー別）
+// 🖼 アイコン設定
 window.setIcon = function(){
 const url = document.getElementById("iconUrl").value;
 if(!url) return;
@@ -162,13 +161,22 @@ time: Date.now()
 document.getElementById("msg").value="";
 };
 
-// 📡 アイコン取得 + メッセージ表示
-onChildAdded(ref(db,"chat"), (data)=>{
-let d = data.val();
+// 📡 表示（順番修正済み）
+onValue(ref(db,"chat"), (snap)=>{
+let data = snap.val() || {};
 
-onValue(ref(db,"icons/"+d.name), (snap)=>{
+let list = Object.values(data);
 
-let icon = snap.val()?.icon || "https://via.placeholder.com/30";
+// ⬇ 時間順ソート（重要）
+list.sort((a,b)=>a.time - b.time);
+
+document.getElementById("messages").innerHTML = "";
+
+list.forEach(d=>{
+
+onValue(ref(db,"icons/"+d.name), (iconSnap)=>{
+
+let icon = iconSnap.val()?.icon || "https://via.placeholder.com/30";
 
 let p = document.createElement("p");
 
@@ -177,18 +185,18 @@ p.innerHTML =
 "<b>"+d.name+"</b>: "+d.text;
 
 document.getElementById("messages").appendChild(p);
-});
 
 });
 
-// 🟢 オンライン表示（おまけ）
+});
+});
+
+// 🟢 オンライン表示
 onValue(ref(db,"icons"), (snap)=>{
-let data = snap.val();
+let data = snap.val() || {};
 let box = document.getElementById("online");
 
 box.innerHTML = "🟢 オンライン: ";
-
-if(!data) return;
 
 Object.keys(data).forEach(name=>{
 box.innerHTML += name + " ";
