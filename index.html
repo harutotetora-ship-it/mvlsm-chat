@@ -97,8 +97,9 @@ getDatabase,
 ref,
 push,
 set,
+onValue,
 onChildAdded,
-onValue
+onDisconnect
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
 
 const firebaseConfig = {
@@ -115,7 +116,7 @@ const app = initializeApp(firebaseConfig);
 const db = getDatabase(app);
 
 let username = "名無し";
-let icons = {}; // ← ここでキャッシュ（超重要）
+let icons = {};
 
 /* =====================
    🔐 ログイン
@@ -129,9 +130,23 @@ if(pass === "MvLO"){
 document.getElementById("login").style.display="none";
 document.getElementById("chat").style.display="block";
 
-// 初期アイコン
+/* 初期アイコン */
 set(ref(db,"icons/"+username),{
 icon:"https://via.placeholder.com/30"
+});
+
+/* 🟢 オンライン登録（ガチ版） */
+const statusRef = ref(db,"status/"+username);
+
+set(statusRef,{
+online:true,
+time:Date.now()
+});
+
+/* 切断時自動オフライン */
+onDisconnect(statusRef).set({
+online:false,
+time:Date.now()
 });
 
 }else{
@@ -141,7 +156,7 @@ document.getElementById("error").innerText="パスワードが違います";
 });
 
 /* =====================
-   🖼 アイコン設定
+   🖼 アイコン
 ===================== */
 document.getElementById("iconBtn").addEventListener("click", () => {
 
@@ -184,7 +199,7 @@ sendMsg();
 });
 
 /* =====================
-   🟢 アイコンキャッシュ
+   🖼 アイコンキャッシュ
 ===================== */
 onValue(ref(db,"icons"), (snap)=>{
 icons = snap.val() || {};
@@ -210,9 +225,9 @@ document.getElementById("messages").appendChild(p);
 });
 
 /* =====================
-   🟢 オンライン表示
+   🟢 ガチオンライン表示
 ===================== */
-onValue(ref(db,"icons"), (snap)=>{
+onValue(ref(db,"status"), (snap)=>{
 
 let data = snap.val() || {};
 let box = document.getElementById("online");
@@ -220,7 +235,9 @@ let box = document.getElementById("online");
 box.innerHTML = "🟢 オンライン: ";
 
 Object.keys(data).forEach(name=>{
+if(data[name].online){
 box.innerHTML += name + " ";
+}
 });
 
 });
