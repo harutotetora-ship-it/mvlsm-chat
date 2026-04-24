@@ -22,7 +22,6 @@ height:100vh;
 width:180px;
 background:#2b2d31;
 padding:10px;
-box-sizing:border-box;
 }
 
 #sidebar button{
@@ -117,7 +116,6 @@ border:none;
 <div id="layout" style="display:none;">
 
 <div id="sidebar">
-<h3>ROOM</h3>
 <button onclick="switchRoom('general')">#general</button>
 <button onclick="switchRoom('game')">#game</button>
 <button onclick="switchRoom('mvlsm')">#mvlsm</button>
@@ -133,7 +131,7 @@ border:none;
 
 <div style="padding:5px;">
 <input id="iconUrl" placeholder="アイコンURL">
-<button id="iconBtn">アイコン</button>
+<button id="iconBtn">アイコン変更</button>
 </div>
 
 <div id="inputArea">
@@ -176,7 +174,9 @@ let currentRoom = "general";
 let users = {};
 let chatStarted = false;
 
-/* 🔐 ログイン */
+/* ======================
+   🔐 ログイン
+====================== */
 document.getElementById("loginBtn").onclick = () => {
 
 const pass = document.getElementById("pass").value;
@@ -190,11 +190,11 @@ return;
 document.getElementById("login").style.display="none";
 document.getElementById("layout").style.display="flex";
 
-/* ★ここ1回だけ */
+/* ★完全保存（これが正解） */
 const uref = ref(db,"users/"+userId);
 
 set(uref,{
-name: username || "名無し",
+name: username,
 icon:"https://via.placeholder.com/30",
 online:true
 });
@@ -206,30 +206,38 @@ online:false
 
 };
 
-/* 🏠 部屋 */
+/* ======================
+   🏠 部屋切替
+====================== */
 window.switchRoom = function(room){
 
 currentRoom = room;
 document.getElementById("messages").innerHTML="";
-
-/* リスナー重複防止 */
 chatStarted = false;
-
 listenRoom();
 
 };
 
-/* 🖼 アイコン */
+/* ======================
+   🖼 アイコン変更
+====================== */
 document.getElementById("iconBtn").onclick = () => {
 
 const url = document.getElementById("iconUrl").value;
 if(!url) return;
 
-set(ref(db,"users/"+userId+"/icon"),url);
+/* ★全部上書き方式 */
+set(ref(db,"users/"+userId),{
+name: username,
+icon: url,
+online:true
+});
 
 };
 
-/* 💬 送信 */
+/* ======================
+   💬 送信
+====================== */
 function sendMsg(){
 
 const msg = document.getElementById("msg").value;
@@ -255,23 +263,28 @@ sendMsg();
 }
 });
 
-/* 👤 ユーザー */
+/* ======================
+   👤 ユーザー更新
+====================== */
 onValue(ref(db,"users"),(snap)=>{
+
 users = snap.val() || {};
 
 let online="";
-Object.keys(users).forEach(id=>{
 
+Object.keys(users).forEach(id=>{
 if(users[id]?.online){
 online += (users[id].name || "名無し") + " ";
 }
-
 });
 
 document.getElementById("online").innerText = online;
+
 });
 
-/* 💬 チャット */
+/* ======================
+   💬 チャット受信
+====================== */
 function listenRoom(){
 
 if(chatStarted) return;
@@ -287,7 +300,7 @@ const icon = u?.icon || "https://via.placeholder.com/30";
 const div = document.createElement("div");
 div.innerHTML =
 "<img src='"+icon+"' width='20' style='border-radius:50%'> " +
-"<b>"+d.name+"</b>: "+d.text;
+"<b>"+(d.name || "名無し")+"</b>: "+d.text;
 
 document.getElementById("messages").appendChild(div);
 
