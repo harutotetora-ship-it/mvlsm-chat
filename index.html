@@ -12,17 +12,45 @@ background:#1e1f22;
 color:white;
 }
 
-#wrap{
-max-width:700px;
-margin:20px auto;
+#layout{
+display:flex;
+height:100vh;
+}
+
+#sidebar{
+width:180px;
+background:#2b2d31;
+padding:10px;
+}
+
+#sidebar button{
+width:100%;
+margin:5px 0;
+padding:8px;
+border:none;
+border-radius:5px;
+background:#40444b;
+color:white;
+cursor:pointer;
+}
+
+#chat{
+flex:1;
+display:flex;
+flex-direction:column;
+}
+
+#top{
+padding:10px;
+background:#2b2d31;
+font-size:13px;
 }
 
 #log{
-height:400px;
+flex:1;
 overflow:auto;
-background:#2b2d31;
 padding:10px;
-border-radius:8px;
+background:#313338;
 }
 
 .msg{
@@ -33,11 +61,28 @@ border-radius:6px;
 word-break:break-word;
 }
 
-.me{background:#5865f2;}
+.me{
+background:#5865f2;
+}
+
+.time{
+font-size:10px;
+color:#bbb;
+margin-left:5px;
+}
+
+.reply{
+font-size:11px;
+color:#aaa;
+border-left:2px solid #5865f2;
+padding-left:5px;
+margin-bottom:4px;
+}
 
 #input{
 display:flex;
-margin-top:10px;
+padding:10px;
+background:#2b2d31;
 }
 
 #text{
@@ -46,26 +91,48 @@ padding:10px;
 }
 
 button{
-padding:10px;
-border:none;
+cursor:pointer;
+}
+
+.send{
 background:#5865f2;
 color:white;
-cursor:pointer;
+border:none;
+padding:10px;
+}
+
+.smallBtn{
+font-size:10px;
+background:none;
+border:none;
+color:#aaa;
 }
 </style>
 </head>
 
 <body>
 
-<div id="wrap">
+<div id="layout">
 
-<h2>smチャット</h2>
+<div id="sidebar">
+<button onclick="switchRoom('zatsudan')">雑談</button>
+<button onclick="switchRoom('bug')">バグ</button>
+<button onclick="switchRoom('update')">更新</button>
+</div>
+
+<div id="chat">
+
+<div id="top">
+🟢 オンライン: <span id="online"></span>
+</div>
 
 <div id="log"></div>
 
 <div id="input">
 <input id="text" placeholder="メッセージ">
-<button id="send">送信</button>
+<button class="send" id="send">送信</button>
+</div>
+
 </div>
 
 </div>
@@ -79,10 +146,13 @@ ref,
 push,
 set,
 onValue,
-remove
+onChildAdded,
+off,
+remove,
+onDisconnect
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
 
-/* 🔥Firebase設定 */
+/* 🔥Firebase */
 const app = initializeApp({
 apiKey: "xxx",
 authDomain: "xxx",
@@ -92,8 +162,11 @@ projectId: "xxx"
 
 const db = getDatabase(app);
 
-const room = "smchat";
 const userId = crypto.randomUUID();
+let username = "名無し";
+let room = "zatsudan";
+let replyTarget = null;
+let chatRef = null;
 
 /* =====================
    送信
@@ -103,22 +176,37 @@ document.getElementById("send").onclick = () => {
 const val = document.getElementById("text").value;
 if(!val) return;
 
-const r = push(ref(db, room));
+const r = push(ref(db, "chat/" + room));
 
 set(r,{
 text: val,
 user: userId,
-time: Date.now()
+time: Date.now(),
+reply: replyTarget
 });
 
+replyTarget = null;
 document.getElementById("text").value = "";
 
 };
 
+/* Enter */
+document.addEventListener("keydown",(e)=>{
+if(e.key==="Enter" && document.activeElement.id==="text"){
+document.getElementById("send").click();
+}
+});
+
 /* =====================
    表示（完全安定）
 ===================== */
-onValue(ref(db, room), (snap) => {
+function listen(){
+
+if(chatRef) off(chatRef);
+
+chatRef = ref(db,"chat/"+room);
+
+onValue(chatRef,(snap)=>{
 
 const log = document.getElementById("log");
 log.innerHTML = "";
@@ -130,19 +218,71 @@ log.innerHTML = "まだメッセージなし";
 return;
 }
 
-Object.keys(data).forEach((key) => {
+Object.entries(data).forEach(([key,d])=>{
 
-const d = data[key];
+if(!d) return;
 
 const div = document.createElement("div");
-div.className = "msg " + (d.user === userId ? "me" : "");
+div.className = "msg " + (d.user===userId ? "me":"");
 
-div.innerText = d?.text ?? "";
+/* 時間 */
+const date = new Date(d.time||Date.now());
+const time =
+`${date.getFullYear()}/`+
+String(date.getMonth()+1).padStart(2,"0")+"/"+
+String(date.getDate()).padStart(2,"0")+" "+
+String(date.getHours()).padStart(2,"0")+":"+
+String(date.getMinutes()).padStart(2,"0");
+
+div.innerHTML = `
+${d.reply ? `<div class="reply">↩ ${d.reply}</div>` : ""}
+<div>
+${d.text}
+<span class="time">${time}</span>
+</div>
+<div>
+<button class="smallBtn replyBtn">返信</button>
+${d.user===userId ? `<button class="smallBtn delBtn">削除</button>` : ""}
+</div>
+`;
+
+div.querySelector(".replyBtn").onclick=()=>{
+replyTarget = d.text;
+};
+
+div.querySelector(".delBtn")?.onclick=()=>{
+remove(ref(db,"chat/"+room+"/"+key));
+};
 
 log.appendChild(div);
 
 });
 
+});
+
+}
+
+listen();
+
+/* =====================
+   ルーム切替
+===================== */
+window.switchRoom = (r)=>{
+room = r;
+document.getElementById("log").innerHTML="";
+listen();
+};
+
+/* =====================
+   オンライン
+===================== */
+onValue(ref(db,"users"),snap=>{
+const u = snap.val()||{};
+let online="";
+Object.values(u).forEach(v=>{
+if(v.online) online+=v.name+" ";
+});
+document.getElementById("online").innerText = online;
 });
 
 </script>
