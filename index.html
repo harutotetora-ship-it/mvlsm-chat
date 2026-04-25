@@ -41,7 +41,7 @@ cursor:pointer;
 background:#5865f2;
 }
 
-/* メイン */
+/* チャット */
 #chatArea{
 flex:1;
 display:flex;
@@ -64,8 +64,8 @@ padding:10px;
 /* 吹き出し */
 .message{
 display:flex;
-align-items:flex-start;
 margin:10px 0;
+align-items:flex-start;
 }
 
 .message.me{
@@ -81,8 +81,6 @@ margin:5px;
 
 .bubbleWrap{
 max-width:70%;
-display:flex;
-flex-direction:column;
 }
 
 .name{
@@ -94,18 +92,40 @@ margin-bottom:3px;
 .time{
 font-size:10px;
 color:#888;
-margin-left:6px;
+margin-left:5px;
+}
+
+.reply{
+font-size:11px;
+color:#aaa;
+border-left:2px solid #5865f2;
+padding-left:6px;
+margin-bottom:5px;
 }
 
 .bubble{
+background:#40444b;
 padding:10px;
 border-radius:15px;
-background:#40444b;
 word-break:break-word;
 }
 
 .me .bubble{
 background:#5865f2;
+}
+
+/* 返信ボタン */
+.replyBtn{
+font-size:10px;
+margin-top:4px;
+background:none;
+border:none;
+color:#aaa;
+cursor:pointer;
+}
+
+.replyBtn:hover{
+color:white;
 }
 
 /* 入力 */
@@ -133,7 +153,7 @@ color:white;
 cursor:pointer;
 }
 
-/* アイコン設定 */
+/* アイコン */
 #iconBox{
 display:flex;
 padding:5px;
@@ -146,7 +166,6 @@ padding:8px;
 border:none;
 border-radius:5px;
 }
-
 </style>
 </head>
 
@@ -225,6 +244,7 @@ let username = "名無し";
 let currentRoom = "zatsudan";
 let users = {};
 let chatRef = null;
+let replyTarget = null;
 
 /* ログイン */
 document.getElementById("loginBtn").onclick = () => {
@@ -240,7 +260,6 @@ return;
 document.getElementById("login").style.display="none";
 document.getElementById("layout").style.display="flex";
 
-/* ユーザー登録 */
 set(ref(db,"users/"+userId),{
 name:username,
 icon:"https://via.placeholder.com/30",
@@ -256,24 +275,24 @@ online:false
 
 /* アイコン */
 document.getElementById("iconBtn").onclick = () => {
-
 const url = document.getElementById("iconUrl").value;
 if(!url) return;
-
-set(ref(db,"users/"+userId+"/icon"), url);
-
+set(ref(db,"users/"+userId+"/icon"),url);
 };
 
 /* 部屋 */
 window.switchRoom = function(room){
-
 currentRoom = room;
 document.getElementById("messages").innerHTML="";
-
 if(chatRef) off(chatRef);
-
 listenRoom();
 };
+
+/* 返信選択 */
+function setReply(text){
+replyTarget = text;
+document.getElementById("msg").placeholder = "返信: " + text.slice(0,20);
+}
 
 /* 送信 */
 function sendMsg(){
@@ -285,9 +304,12 @@ push(ref(db,"chat/"+currentRoom),{
 userId,
 name:username,
 text:msg,
-time:Date.now()
+time:Date.now(),
+reply: replyTarget
 });
 
+replyTarget = null;
+document.getElementById("msg").placeholder = "メッセージ";
 document.getElementById("msg").value="";
 }
 
@@ -335,13 +357,24 @@ div.className = "message" + (isMe ? " me" : "");
 div.innerHTML = `
 <img class="avatar" src="${icon}">
 <div class="bubbleWrap">
+
 <div class="name">
 <b>${d.name}</b>
 <span class="time">${time}</span>
 </div>
+
+${d.reply ? `<div class="reply">↩ ${d.reply}</div>` : ""}
+
 <div class="bubble">${d.text}</div>
+
+<button class="replyBtn">返信</button>
+
 </div>
 `;
+
+div.querySelector(".replyBtn").onclick = () => {
+setReply(d.text);
+};
 
 document.getElementById("messages").appendChild(div);
 
