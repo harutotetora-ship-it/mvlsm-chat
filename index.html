@@ -123,19 +123,6 @@ background:#5865f2;
 color:white;
 }
 
-#iconBox{
-display:flex;
-padding:5px;
-background:#2b2d31;
-}
-
-#iconUrl{
-flex:1;
-padding:8px;
-border:none;
-border-radius:5px;
-}
-
 #login{
 max-width:300px;
 margin:100px auto;
@@ -172,11 +159,6 @@ border-radius:10px;
 
 <div id="messages"></div>
 
-<div id="iconBox">
-<input id="iconUrl" placeholder="アイコンURL">
-<button id="iconBtn">アイコン設定</button>
-</div>
-
 <div id="inputArea">
 <input id="msg" placeholder="メッセージ">
 <button class="send" id="sendBtn">送信</button>
@@ -200,12 +182,12 @@ off,
 remove
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
 
-/* 🔥ここだけ自分のFirebaseに変更 */
+/* 🔥あなたのFirebase設定 */
 const app = initializeApp({
-apiKey: "https://smtyatto-default-rtdb.asia-southeast1.firebasedatabase.app",
-authDomain: "https://smtyatto-default-rtdb.asia-southeast1.firebasedatabase.app",
-databaseURL: "https://smtyatto-default-rtdb.asia-southeast1.firebasedatabase.app",
-projectId: "https://smtyatto-default-rtdb.asia-southeast1.firebasedatabase.app"
+apiKey:"xxx",
+authDomain:"xxx",
+databaseURL:"https://smtyatto-default-rtdb.firebaseio.com",
+projectId:"xxx"
 });
 
 const db = getDatabase(app);
@@ -217,7 +199,9 @@ let users={};
 let chatRef=null;
 let replyTarget=null;
 
-/* ログイン */
+/* =====================
+   ログイン
+===================== */
 document.getElementById("loginBtn").onclick=()=>{
 
 const pass=document.getElementById("pass").value;
@@ -244,28 +228,9 @@ online:false
 
 };
 
-/* アイコン */
-document.getElementById("iconBtn").onclick=()=>{
-const url=document.getElementById("iconUrl").value;
-if(!url) return;
-set(ref(db,"users/"+userId+"/icon"),url);
-};
-
-/* 部屋 */
-window.switchRoom=function(room){
-currentRoom=room;
-document.getElementById("messages").innerHTML="";
-if(chatRef) off(chatRef);
-listenRoom();
-};
-
-/* 返信 */
-function setReply(text){
-replyTarget=text;
-document.getElementById("msg").placeholder="返信: "+text.slice(0,20);
-}
-
-/* 送信 */
+/* =====================
+   送信
+===================== */
 function sendMsg(){
 
 const msg=document.getElementById("msg").value;
@@ -283,7 +248,6 @@ reply:replyTarget
 
 replyTarget=null;
 document.getElementById("msg").value="";
-document.getElementById("msg").placeholder="メッセージ";
 }
 
 document.getElementById("sendBtn").onclick=sendMsg;
@@ -295,17 +259,9 @@ sendMsg();
 }
 });
 
-/* オンライン */
-onValue(ref(db,"users"),snap=>{
-users=snap.val()||{};
-let online="";
-Object.keys(users).forEach(id=>{
-if(users[id]?.online) online+=users[id].name+" ";
-});
-document.getElementById("online").innerText=online;
-});
-
-/* チャット */
+/* =====================
+   チャット表示
+===================== */
 function listenRoom(){
 
 if(chatRef) off(chatRef);
@@ -317,10 +273,8 @@ onChildAdded(chatRef,(snap)=>{
 const d=snap.val();
 const key=snap.key;
 
-const u=users?.[d.userId];
-const icon=u?.icon||"https://via.placeholder.com/30";
+const isMe=d.userId===userId;
 
-/* 時間 */
 const date=new Date(d.time||Date.now());
 const time=
 `${date.getFullYear()}/`+
@@ -329,14 +283,10 @@ String(date.getDate()).padStart(2,"0")+" "+
 String(date.getHours()).padStart(2,"0")+":"+
 String(date.getMinutes()).padStart(2,"0");
 
-const isMe=d.userId===userId;
-
 const div=document.createElement("div");
 div.className="message "+(isMe?"me":"other");
 
 div.innerHTML=`
-<img class="avatar" src="${icon}">
-
 <div class="bubbleWrap">
 
 <div class="name">
@@ -358,10 +308,10 @@ ${isMe?`<button class="deleteBtn">削除</button>`:""}
 
 /* 返信 */
 div.querySelector(".replyBtn").onclick=()=>{
-setReply(d.text);
+replyTarget=d.text;
 };
 
-/* 削除（確実） */
+/* 🔥削除（確実版） */
 div.querySelector(".deleteBtn")?.addEventListener("click",()=>{
 remove(ref(db,"chat/"+currentRoom+"/"+key));
 });
@@ -373,6 +323,27 @@ document.getElementById("messages").appendChild(div);
 }
 
 listenRoom();
+
+/* =====================
+   オンライン
+===================== */
+onValue(ref(db,"users"),snap=>{
+users=snap.val()||{};
+let online="";
+Object.keys(users).forEach(id=>{
+if(users[id]?.online) online+=users[id].name+" ";
+});
+document.getElementById("online").innerText=online;
+});
+
+/* =====================
+   部屋切替
+===================== */
+window.switchRoom=function(room){
+currentRoom=room;
+document.getElementById("messages").innerHTML="";
+listenRoom();
+};
 
 </script>
 
