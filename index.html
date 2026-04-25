@@ -2,170 +2,16 @@
 <html lang="ja">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>MVLsmチャット</title>
-
-<style>
-body{
-margin:0;
-font-family:sans-serif;
-background:#1e1f22;
-color:white;
-}
-
-#layout{display:flex;height:100vh;}
-
-#sidebar{
-width:180px;
-background:#2b2d31;
-padding:10px;
-}
-
-#sidebar button{
-width:100%;
-margin:5px 0;
-padding:8px;
-border:none;
-border-radius:5px;
-background:#40444b;
-color:white;
-cursor:pointer;
-}
-
-#chatArea{
-flex:1;
-display:flex;
-flex-direction:column;
-background:#313338;
-}
-
-#topBar{
-padding:10px;
-background:#2b2d31;
-font-size:14px;
-}
-
-#messages{
-flex:1;
-overflow-y:auto;
-padding:10px;
-}
-
-.message{
-display:flex;
-margin:10px 0;
-}
-
-.message.me{flex-direction:row-reverse;text-align:right;}
-
-.avatar{
-width:32px;height:32px;border-radius:50%;margin:5px;
-}
-
-.bubbleWrap{max-width:70%;display:flex;flex-direction:column;}
-
-.message.me .bubbleWrap{align-items:flex-end;}
-
-.name{font-size:12px;color:#bbb;}
-
-.time{font-size:10px;color:#888;margin-left:5px;}
-
-.bubble{
-background:#40444b;
-padding:10px;
-border-radius:15px;
-margin-top:3px;
-word-break:break-word;
-}
-
-.message.me .bubble{background:#5865f2;color:white;}
-
-.reply{
-font-size:11px;
-color:#aaa;
-border-left:2px solid #5865f2;
-padding-left:6px;
-margin-bottom:4px;
-}
-
-button{cursor:pointer;}
-
-.replyBtn,.deleteBtn{
-font-size:10px;
-background:none;
-border:none;
-color:#aaa;
-margin-top:4px;
-}
-
-.replyBtn:hover,.deleteBtn:hover{color:white;}
-
-#inputArea{
-display:flex;
-padding:10px;
-background:#2b2d31;
-}
-
-#msg{
-flex:1;
-padding:10px;
-border:none;
-border-radius:5px;
-outline:none;
-}
-
-.send{
-margin-left:5px;
-padding:10px;
-border:none;
-border-radius:5px;
-background:#5865f2;
-color:white;
-}
-
-#login{
-max-width:300px;
-margin:100px auto;
-background:#2b2d31;
-padding:20px;
-border-radius:10px;
-}
-</style>
+<title>Firebaseテスト</title>
 </head>
-
 <body>
 
-<div id="login">
-<h2>MVLsmチャット</h2>
-<input id="name" placeholder="名前">
-<input type="password" id="pass" placeholder="パスワード">
-<button id="loginBtn">入室</button>
-<p id="error"></p>
-</div>
+<h2>Firebaseテスト</h2>
 
-<div id="layout" style="display:none;">
+<input id="text" placeholder="テスト入力">
+<button id="send">送信</button>
 
-<div id="sidebar">
-<button onclick="switchRoom('zatsudan')">⭐ 雑談</button>
-<button onclick="switchRoom('bug')">🐛 バグ報告</button>
-<button onclick="switchRoom('update')">📢 アップデート案</button>
-</div>
-
-<div id="chatArea">
-
-<div id="topBar">
-🟢 オンライン: <span id="online"></span>
-</div>
-
-<div id="messages"></div>
-
-<div id="inputArea">
-<input id="msg" placeholder="メッセージ">
-<button class="send" id="sendBtn">送信</button>
-</div>
-
-</div>
-</div>
+<div id="log"></div>
 
 <script type="module">
 
@@ -173,177 +19,49 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebas
 import {
 getDatabase,
 ref,
-set,
 push,
-onValue,
-onChildAdded,
-onDisconnect,
-off,
-remove
+set,
+onChildAdded
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
 
-/* 🔥あなたのFirebase設定 */
+/* 🔥ここだけ自分のFirebase */
 const app = initializeApp({
-apiKey:"xxx",
-authDomain:"xxx",
-databaseURL:"https://smtyatto-default-rtdb.firebaseio.com",
-projectId:"xxx"
+apiKey: "xxx",
+authDomain: "xxx",
+databaseURL: "https://smtyatto-default-rtdb.firebaseio.com",
+projectId: "xxx"
 });
 
 const db = getDatabase(app);
 
-const userId = crypto.randomUUID();
-let username="名無し";
-let currentRoom="zatsudan";
-let users={};
-let chatRef=null;
-let replyTarget=null;
+/* 書き込み */
+document.getElementById("send").onclick = () => {
 
-/* =====================
-   ログイン
-===================== */
-document.getElementById("loginBtn").onclick=()=>{
+const val = document.getElementById("text").value;
+if(!val) return;
 
-const pass=document.getElementById("pass").value;
-username=document.getElementById("name").value||"名無し";
+const r = push(ref(db,"test"));
 
-if(pass!=="MvLO"){
-document.getElementById("error").innerText="パスワードミス";
-return;
-}
-
-document.getElementById("login").style.display="none";
-document.getElementById("layout").style.display="flex";
-
-set(ref(db,"users/"+userId),{
-name:username,
-icon:"https://via.placeholder.com/30",
-online:true
+set(r,{
+text: val,
+time: Date.now()
 });
 
-onDisconnect(ref(db,"users/"+userId)).set({
-name:username,
-online:false
-});
+document.getElementById("text").value = "";
 
 };
 
-/* =====================
-   送信
-===================== */
-function sendMsg(){
+/* 読み込み */
+onChildAdded(ref(db,"test"),(snap)=>{
 
-const msg=document.getElementById("msg").value;
-if(!msg) return;
+const d = snap.val();
 
-const newRef=push(ref(db,"chat/"+currentRoom));
+const div = document.createElement("div");
+div.innerText = d.text;
 
-set(newRef,{
-userId,
-name:username,
-text:msg,
-time:Date.now(),
-reply:replyTarget
-});
-
-replyTarget=null;
-document.getElementById("msg").value="";
-}
-
-document.getElementById("sendBtn").onclick=sendMsg;
-
-/* Enter */
-document.addEventListener("keydown",(e)=>{
-if(e.key==="Enter" && document.activeElement.id==="msg"){
-sendMsg();
-}
-});
-
-/* =====================
-   チャット表示
-===================== */
-function listenRoom(){
-
-if(chatRef) off(chatRef);
-
-chatRef=ref(db,"chat/"+currentRoom);
-
-onChildAdded(chatRef,(snap)=>{
-
-const d=snap.val();
-const key=snap.key;
-
-const isMe=d.userId===userId;
-
-const date=new Date(d.time||Date.now());
-const time=
-`${date.getFullYear()}/`+
-String(date.getMonth()+1).padStart(2,"0")+"/"+
-String(date.getDate()).padStart(2,"0")+" "+
-String(date.getHours()).padStart(2,"0")+":"+
-String(date.getMinutes()).padStart(2,"0");
-
-const div=document.createElement("div");
-div.className="message "+(isMe?"me":"other");
-
-div.innerHTML=`
-<div class="bubbleWrap">
-
-<div class="name">
-<b>${d.name}</b>
-<span class="time">${time}</span>
-</div>
-
-${d.reply?`<div class="reply">↩ ${d.reply}</div>`:""}
-
-<div class="bubble">${d.text}</div>
-
-<div>
-<button class="replyBtn">返信</button>
-${isMe?`<button class="deleteBtn">削除</button>`:""}
-</div>
-
-</div>
-`;
-
-/* 返信 */
-div.querySelector(".replyBtn").onclick=()=>{
-replyTarget=d.text;
-};
-
-/* 🔥削除（確実版） */
-div.querySelector(".deleteBtn")?.addEventListener("click",()=>{
-remove(ref(db,"chat/"+currentRoom+"/"+key));
-});
-
-document.getElementById("messages").appendChild(div);
+document.getElementById("log").appendChild(div);
 
 });
-
-}
-
-listenRoom();
-
-/* =====================
-   オンライン
-===================== */
-onValue(ref(db,"users"),snap=>{
-users=snap.val()||{};
-let online="";
-Object.keys(users).forEach(id=>{
-if(users[id]?.online) online+=users[id].name+" ";
-});
-document.getElementById("online").innerText=online;
-});
-
-/* =====================
-   部屋切替
-===================== */
-window.switchRoom=function(room){
-currentRoom=room;
-document.getElementById("messages").innerHTML="";
-listenRoom();
-};
 
 </script>
 
