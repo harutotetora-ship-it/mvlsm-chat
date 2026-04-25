@@ -18,6 +18,7 @@ display:flex;
 height:100vh;
 }
 
+/* サイド */
 #sidebar{
 width:180px;
 background:#2b2d31;
@@ -40,6 +41,7 @@ cursor:pointer;
 background:#5865f2;
 }
 
+/* チャット */
 #chatArea{
 flex:1;
 display:flex;
@@ -83,6 +85,7 @@ color:white;
 cursor:pointer;
 }
 
+/* ログイン */
 #login{
 max-width:300px;
 margin:100px auto;
@@ -98,30 +101,6 @@ padding:10px;
 margin:5px;
 border-radius:5px;
 border:none;
-}
-
-/* アイコンエリア */
-#iconArea{
-padding:8px;
-background:#202225;
-display:flex;
-gap:6px;
-align-items:center;
-}
-
-#iconUrl{
-flex:1;
-padding:8px;
-border:none;
-border-radius:5px;
-}
-
-/* 🔥 修正ポイント */
-#iconBtn{
-background:#faa61a;
-color:black;
-font-weight:bold;
-font-family:sans-serif;
 }
 </style>
 </head>
@@ -155,9 +134,9 @@ font-family:sans-serif;
 <div id="messages"></div>
 
 <!-- アイコン -->
-<div id="iconArea">
+<div style="padding:5px;background:#2b2d31;">
 <input id="iconUrl" placeholder="アイコンURL">
-<button id="iconBtn">🖼 アイコン設定</button>
+<button id="iconBtn">アイコン設定</button>
 </div>
 
 <!-- 入力 -->
@@ -201,11 +180,10 @@ let username = "名無し";
 let currentRoom = "zatsudan";
 let users = {};
 
-/* リスナー管理 */
-let chatRef = null;
-let chatHandler = null;
+/* 🔥 重要：重複防止 */
+let chatUnsub = null;
 
-/* ログイン */
+/* ================= ログイン ================= */
 document.getElementById("loginBtn").onclick = () => {
 
 const pass = document.getElementById("pass").value;
@@ -234,21 +212,23 @@ online:false
 
 };
 
-/* 部屋切替 */
+/* ================= 部屋 ================= */
 window.switchRoom = function(room){
 
 currentRoom = room;
 document.getElementById("messages").innerHTML="";
 
-if(chatRef && chatHandler){
-off(chatRef, "child_added", chatHandler);
+/* 🔥 前のリスナー削除 */
+if(chatUnsub){
+chatUnsub();
+chatUnsub = null;
 }
 
 listenRoom();
 
 };
 
-/* アイコン */
+/* ================= アイコン ================= */
 document.getElementById("iconBtn").onclick = () => {
 
 const url = document.getElementById("iconUrl").value;
@@ -258,7 +238,7 @@ set(ref(db,"users/"+userId+"/icon"), url);
 
 };
 
-/* 送信 */
+/* ================= 送信 ================= */
 function sendMsg(){
 
 const msg = document.getElementById("msg").value;
@@ -283,48 +263,43 @@ sendMsg();
 }
 });
 
-/* オンライン */
+/* ================= オンライン ================= */
 onValue(ref(db,"users"),(snap)=>{
 
 users = snap.val() || {};
 
-let online="";
+let onlineList = "";
 
 Object.keys(users).forEach(id=>{
 if(users[id]?.online){
-online += (users[id].name || "名無し") + " ";
+onlineList += (users[id].name || "名無し") + " ";
 }
 });
 
-document.getElementById("online").innerText = online;
+document.getElementById("online").innerText = onlineList;
 
 });
 
-/* チャット */
+/* ================= チャット ================= */
 function listenRoom(){
 
-chatRef = ref(db,"chat/"+currentRoom);
+const chatRef = ref(db,"chat/"+currentRoom);
 
-chatHandler = (snap)=>{
+chatUnsub = onChildAdded(chatRef,(snap)=>{
 
 const d = snap.val();
-const u = users?.[d.userId];
+const u = users[d.userId] || {};
 
-const name = d?.name || "名無し";
-const text = d?.text || "";
-const icon = u?.icon || "https://via.placeholder.com/30";
+const icon = u.icon || "https://via.placeholder.com/30";
 
 const div = document.createElement("div");
-
 div.innerHTML =
-"<img src='"+icon+"' width='20' style='border-radius:50%;margin-right:5px;vertical-align:middle;'> " +
-"<b>"+name+"</b>: "+text;
+`<img src="${icon}" width="20" style="border-radius:50%;vertical-align:middle;margin-right:5px;">
+<b>${d.name}</b>: ${d.text}`;
 
 document.getElementById("messages").appendChild(div);
 
-};
-
-onChildAdded(chatRef, chatHandler);
+});
 
 }
 
