@@ -100,7 +100,7 @@ border-radius:5px;
 border:none;
 }
 
-/* アイコン */
+/* アイコンエリア */
 #iconArea{
 padding:8px;
 background:#202225;
@@ -116,10 +116,12 @@ border:none;
 border-radius:5px;
 }
 
+/* 🔥 修正ポイント */
 #iconBtn{
 background:#faa61a;
 color:black;
 font-weight:bold;
+font-family:sans-serif;
 }
 </style>
 </head>
@@ -155,7 +157,7 @@ font-weight:bold;
 <!-- アイコン -->
 <div id="iconArea">
 <input id="iconUrl" placeholder="アイコンURL">
-<button id="iconBtn">決定</button>
+<button id="iconBtn">🖼 アイコン設定</button>
 </div>
 
 <!-- 入力 -->
@@ -199,13 +201,11 @@ let username = "名無し";
 let currentRoom = "zatsudan";
 let users = {};
 
-/* 🔥 リスナー管理 */
+/* リスナー管理 */
 let chatRef = null;
 let chatHandler = null;
 
-/* =====================
-   ログイン
-===================== */
+/* ログイン */
 document.getElementById("loginBtn").onclick = () => {
 
 const pass = document.getElementById("pass").value;
@@ -234,15 +234,12 @@ online:false
 
 };
 
-/* =====================
-   部屋切替（重要）
-===================== */
+/* 部屋切替 */
 window.switchRoom = function(room){
 
 currentRoom = room;
 document.getElementById("messages").innerHTML="";
 
-/* 🔥 完全停止 */
 if(chatRef && chatHandler){
 off(chatRef, "child_added", chatHandler);
 }
@@ -251,9 +248,7 @@ listenRoom();
 
 };
 
-/* =====================
-   アイコン
-===================== */
+/* アイコン */
 document.getElementById("iconBtn").onclick = () => {
 
 const url = document.getElementById("iconUrl").value;
@@ -263,9 +258,7 @@ set(ref(db,"users/"+userId+"/icon"), url);
 
 };
 
-/* =====================
-   送信
-===================== */
+/* 送信 */
 function sendMsg(){
 
 const msg = document.getElementById("msg").value;
@@ -290,9 +283,7 @@ sendMsg();
 }
 });
 
-/* =====================
-   オンライン
-===================== */
+/* オンライン */
 onValue(ref(db,"users"),(snap)=>{
 
 users = snap.val() || {};
@@ -309,9 +300,7 @@ document.getElementById("online").innerText = online;
 
 });
 
-/* =====================
-   チャット（完全修正版）
-===================== */
+/* チャット */
 function listenRoom(){
 
 chatRef = ref(db,"chat/"+currentRoom);
@@ -339,7 +328,6 @@ onChildAdded(chatRef, chatHandler);
 
 }
 
-/* 初期 */
 listenRoom();
 
 </script>
