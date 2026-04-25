@@ -77,14 +77,6 @@ background:linear-gradient(90deg,red,orange,yellow,green,cyan,blue,violet);
 color:transparent;
 }
 
-.replyBox{
-font-size:11px;
-color:#aaa;
-border-left:2px solid #5865f2;
-padding-left:6px;
-margin-bottom:4px;
-}
-
 .replyBtn{
 font-size:10px;
 background:none;
@@ -153,8 +145,8 @@ border-radius:5px;
 
 <div id="sidebar">
 <button onclick="switchRoom('zatsudan')">⭐ 雑談</button>
-<button onclick="switchRoom('bug')">🐛 バグ報告</button>
-<button onclick="switchRoom('update')">📢 アプデええええ</button>
+<button onclick="switchRoom('bug')">🐛 バグ</button>
+<button onclick="switchRoom('update')">📢 更新</button>
 </div>
 
 <div id="chatArea">
@@ -295,41 +287,55 @@ onChildAdded(chatRef,(snap)=>{
 const d=snap.val();
 if(!d) return;
 
-const key=snap.key;
-
 const date=new Date(d.time||Date.now());
 const time=date.getHours()+":"+String(date.getMinutes()).padStart(2,"0");
 
 const div=document.createElement("div");
 div.className="message";
 
-/* HTML */
+/* ★ここが返信レイアウト完成版 */
 div.innerHTML=`
-<img class="avatar" src="https://via.placeholder.com/30">
-
 <div>
 
-<div class="${d.isAdmin?"admin":""}">
+${d.reply ? `
+<div style="
+font-size:11px;
+color:#aaa;
+border-left:2px solid #5865f2;
+padding-left:6px;
+margin-bottom:6px;
+opacity:0.9;
+">
+↩ ${d.reply}
+</div>
+` : ""}
+
+<div style="display:flex;align-items:center;gap:6px;">
+<img class="avatar" src="https://via.placeholder.com/30">
+
+<div class="${d.isAdmin ? "admin" : ""}">
 <b>${d.name}</b>
-<span style="font-size:10px;color:#888">${time}</span>
+<span style="font-size:10px;color:#888;margin-left:5px">
+${time}
+</span>
+</div>
 </div>
 
-${d.reply ? `<div class="replyBox">↩ ${d.reply}</div>` : ""}
-
-<div class="bubble">${d.text}</div>
+<div class="bubble" style="margin-top:4px;">
+${d.text}
+</div>
 
 <button class="replyBtn">返信</button>
 
 </div>
 `;
 
-/* 返信確実 */
+/* 返信動作 */
 div.querySelector(".replyBtn").onclick=()=>{
 replyTarget=d.text;
 document.getElementById("msg").placeholder="返信: "+d.text.slice(0,20);
 };
 
-/* 表示 */
 document.getElementById("messages").appendChild(div);
 
 });
