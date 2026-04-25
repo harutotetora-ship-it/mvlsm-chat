@@ -1,5 +1,4 @@
-<!-- ★ここはあなたの元コードと同じなので省略せず完全維持 -->
-<!-- 変更はJSの削除部分だけ -->
+<!-- 変更点だけ書かず、動く完成版 -->
 
 <script type="module">
 
@@ -38,7 +37,7 @@ let currentRoom="zatsudan";
 let isAdmin=false;
 let chatRef;
 
-/* 送信 */
+/* ===== 送信 ===== */
 function sendMessage(){
 
 const input=document.getElementById("msg");
@@ -55,7 +54,7 @@ isAdmin:isAdmin
 input.value="";
 }
 
-/* 初期化 */
+/* ===== 初期化 ===== */
 window.addEventListener("DOMContentLoaded",()=>{
 
 document.getElementById("loginBtn").onclick=()=>{
@@ -71,29 +70,44 @@ return;
 document.getElementById("login").style.display="none";
 document.getElementById("layout").style.display="flex";
 
+/* ユーザー */
 set(ref(db,`${ROOT}/users/${userId}`),{
 name:username,
-online:true
+online:true,
+isAdmin:false
 });
 
 onDisconnect(ref(db,`${ROOT}/users/${userId}`)).set({online:false});
 
+/* 管理者状態反映 */
+onValue(ref(db,`${ROOT}/users/${userId}`),(snap)=>{
+const data=snap.val();
+if(data?.isAdmin) isAdmin=true;
+});
+
 listenRoom();
 };
 
-/* 管理者 */
+/* 管理者ON */
 document.getElementById("adminBtn").onclick=()=>{
 const pass=prompt("管理者パスワード");
+
 if(pass==="admin123"){
 isAdmin=true;
-alert("管理者ON");
+
+/* Firebaseにも保存 */
+set(ref(db,`${ROOT}/users/${userId}/isAdmin`),true);
+
+alert("管理者ON（虹色表示有効）");
 }else{
 alert("違う");
 }
 };
 
+/* 送信 */
 document.getElementById("sendBtn").onclick=sendMessage;
 
+/* Enter */
 document.getElementById("msg").addEventListener("keydown",(e)=>{
 if(e.key==="Enter"){
 e.preventDefault();
@@ -103,7 +117,7 @@ sendMessage();
 
 });
 
-/* ルーム */
+/* ===== ルーム ===== */
 window.switchRoom=function(room){
 currentRoom=room;
 document.getElementById("messages").innerHTML="";
@@ -111,7 +125,7 @@ if(chatRef) off(chatRef);
 listenRoom();
 };
 
-/* チャット表示（削除機能なし） */
+/* ===== チャット ===== */
 function listenRoom(){
 
 chatRef=ref(db,`${ROOT}/chat/${currentRoom}`);
@@ -147,7 +161,7 @@ document.getElementById("messages").appendChild(div);
 
 }
 
-/* オンライン */
+/* ===== オンライン ===== */
 onValue(ref(db,`${ROOT}/users`),(snap)=>{
 const data=snap.val()||{};
 let online="";
