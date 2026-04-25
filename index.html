@@ -178,17 +178,18 @@ let users = {};
 let chatStarted = false;
 
 /* =====================
-   🔥 200文字制限
+   🔥 200文字制限（確実版）
 ===================== */
 function limitText(text, max = 200){
-if(!text) return "";
+text = String(text || "");
+
 if(text.length > max){
 return text.slice(0, max) + " (以下略)";
 }
 return text;
 }
 
-/* 安全化（軽い対策） */
+/* HTML安全化＋制限 */
 function safe(text){
 return limitText(
 String(text)
@@ -242,12 +243,9 @@ listenRoom();
    アイコン
 ===================== */
 document.getElementById("iconBtn").onclick = () => {
-
 const url = document.getElementById("iconUrl").value;
 if(!url) return;
-
 set(ref(db,"users/"+userId+"/icon"), url);
-
 };
 
 /* =====================
@@ -297,7 +295,7 @@ document.getElementById("online").innerText = online;
 });
 
 /* =====================
-   チャット
+   チャット受信
 ===================== */
 function listenRoom(){
 
