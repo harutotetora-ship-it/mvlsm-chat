@@ -13,8 +13,117 @@ background:#1e1f22;
 color:white;
 }
 
-#layout{display:none;height:100vh;flex-direction:column;}
+#layout{display:flex;height:100vh;}
 
+#sidebar{
+width:180px;
+background:#2b2d31;
+padding:10px;
+}
+
+#sidebar button{
+width:100%;
+margin:5px 0;
+padding:8px;
+border:none;
+border-radius:5px;
+background:#40444b;
+color:white;
+}
+
+#chatArea{
+flex:1;
+display:flex;
+flex-direction:column;
+background:#313338;
+}
+
+#topBar{
+padding:10px;
+background:#2b2d31;
+font-size:14px;
+}
+
+#messages{
+flex:1;
+overflow-y:auto;
+padding:10px;
+}
+
+.message{
+display:flex;
+margin:10px 0;
+}
+
+.avatar{
+width:32px;
+height:32px;
+border-radius:50%;
+margin:5px;
+}
+
+.bubbleWrap{
+max-width:70%;
+display:flex;
+flex-direction:column;
+}
+
+.name{
+font-size:12px;
+color:#bbb;
+}
+
+.time{
+font-size:10px;
+color:#888;
+margin-left:5px;
+}
+
+.bubble{
+background:#40444b;
+padding:10px;
+border-radius:10px;
+word-break:break-word;
+}
+
+#inputArea{
+display:flex;
+padding:10px;
+background:#2b2d31;
+}
+
+#msg{
+flex:1;
+padding:10px;
+border:none;
+border-radius:5px;
+outline:none;
+}
+
+#sendBtn{
+margin-left:5px;
+padding:10px;
+border:none;
+border-radius:5px;
+background:#5865f2;
+color:white;
+cursor:pointer;
+}
+
+/* 管理者虹色 */
+.admin b{
+background: linear-gradient(90deg, red, orange, yellow, green, cyan, blue, violet);
+-webkit-background-clip:text;
+color:transparent;
+animation:rainbow 2s linear infinite;
+}
+
+@keyframes rainbow{
+0%{filter:hue-rotate(0deg);}
+100%{filter:hue-rotate(360deg);}
+}
+
+/* ログイン */
 #login{
 max-width:300px;
 margin:100px auto;
@@ -31,40 +140,6 @@ margin:5px;
 border:none;
 border-radius:5px;
 }
-
-button{
-padding:10px;
-border:none;
-border-radius:5px;
-cursor:pointer;
-}
-
-#sendBtn{background:#5865f2;color:white;}
-
-#messages{
-flex:1;
-overflow-y:auto;
-padding:10px;
-background:#313338;
-}
-
-.msg{
-margin:8px 0;
-padding:8px;
-background:#40444b;
-border-radius:8px;
-}
-
-.name{
-font-size:12px;
-color:#aaa;
-}
-
-.admin{
-background:linear-gradient(90deg,red,orange,yellow,green,cyan,blue,violet);
--webkit-background-clip:text;
-color:transparent;
-}
 </style>
 </head>
 
@@ -73,17 +148,33 @@ color:transparent;
 <div id="login">
 <h2>MVLsmチャット</h2>
 <input id="name" placeholder="名前">
-<input id="pass" type="password" placeholder="パスワード">
+<input type="password" id="pass" placeholder="パスワード">
 <button id="loginBtn">入室</button>
-<p id="err"></p>
+<button id="adminBtn">管理者確認</button>
+<p id="error"></p>
 </div>
 
-<div id="layout">
+<div id="layout" style="display:none;">
+
+<div id="sidebar">
+<button onclick="switchRoom('zatsudan')">⭐ 雑談</button>
+<button onclick="switchRoom('bug')">🐛 バグ</button>
+<button onclick="switchRoom('update')">📢 更新</button>
+</div>
+
+<div id="chatArea">
+
+<div id="topBar">
+🟢 オンライン: <span id="online"></span>
+</div>
+
 <div id="messages"></div>
 
-<div style="display:flex;padding:10px;background:#2b2d31;">
-<input id="msg" style="flex:1;" placeholder="メッセージ">
+<div id="inputArea">
+<input id="msg" placeholder="メッセージ">
 <button id="sendBtn">送信</button>
+</div>
+
 </div>
 </div>
 
@@ -93,10 +184,13 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebas
 import {
 getDatabase,
 ref,
-push,
 set,
+push,
+onValue,
 onChildAdded,
-remove
+onDisconnect,
+remove,
+off
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
 
 const firebaseConfig = {
@@ -112,98 +206,161 @@ appId: "1:720432898013:web:3fc9bb90082235ab506034"
 const app = initializeApp(firebaseConfig);
 const db = getDatabase(app);
 
-/* ===== 安定設定 ===== */
+/* =====================
+   smchat統一
+===================== */
 const ROOT = "smchat";
 
-let uid = localStorage.getItem("uid");
-if(!uid){
-uid = crypto.randomUUID();
-localStorage.setItem("uid",uid);
+let userId = localStorage.getItem("uid") || crypto.randomUUID();
+localStorage.setItem("uid", userId);
+
+let username="名無し";
+let currentRoom="zatsudan";
+let isAdmin=false;
+let chatRef;
+
+/* =====================
+   送信
+===================== */
+function sendMessage(){
+
+const input=document.getElementById("msg");
+if(!input.value) return;
+
+push(ref(db,`${ROOT}/chat/${currentRoom}`),{
+userId,
+name:username,
+text:input.value,
+time:Date.now(),
+isAdmin:isAdmin
+});
+
+input.value="";
 }
 
-let name="名無し";
-let isAdmin=false;
-let room="main";
+/* =====================
+   初期化
+===================== */
+window.addEventListener("DOMContentLoaded",()=>{
 
-/* ===== 入室 ===== */
+/* 入室 */
 document.getElementById("loginBtn").onclick=()=>{
 
 const pass=document.getElementById("pass").value;
-name=document.getElementById("name").value||"名無し";
+username=document.getElementById("name").value||"名無し";
 
 if(pass!=="MvLO"){
-document.getElementById("err").innerText="パスワード違う";
+document.getElementById("error").innerText="パスワードミス";
 return;
 }
 
 document.getElementById("login").style.display="none";
 document.getElementById("layout").style.display="flex";
 
-/* ユーザー登録 */
-set(ref(db,`${ROOT}/users/${uid}`),{
-name
+set(ref(db,`${ROOT}/users/${userId}`),{
+name:username,
+online:true
 });
 
-listen();
+onDisconnect(ref(db,`${ROOT}/users/${userId}`)).set({online:false});
+
+listenRoom();
+
 };
 
-/* ===== 管理者 ===== */
-document.addEventListener("keydown",(e)=>{
-if(e.key==="F2"){
-const p=prompt("admin?");
-if(p==="admin123") isAdmin=true;
+/* 管理者 */
+document.getElementById("adminBtn").onclick=()=>{
+const pass=prompt("管理者パスワード");
+
+if(pass==="admin123"){
+isAdmin=true;
+alert("管理者ON");
+}else{
+alert("違う");
 }
-});
+};
 
-/* ===== 送信（ここが超重要） ===== */
-function send(){
+/* 送信 */
+document.getElementById("sendBtn").onclick=sendMessage;
 
-const msg=document.getElementById("msg");
-if(!msg.value) return;
-
-push(ref(db,`${ROOT}/chat/${room}`),{
-name,
-text:msg.value,
-time:Date.now(),
-isAdmin
-});
-
-msg.value="";
-}
-
-/* ボタン */
-document.getElementById("sendBtn").onclick=send;
-
-/* Enter確実 */
-document.getElementById("msg").addEventListener("keydown",(e)=>{
+/* Enter対応 */
+const input=document.getElementById("msg");
+input.addEventListener("keydown",(e)=>{
 if(e.key==="Enter"){
 e.preventDefault();
-send();
+sendMessage();
 }
 });
 
-/* ===== 表示 ===== */
-function listen(){
+});
 
-const box=document.getElementById("messages");
+/* =====================
+   ルーム
+===================== */
+window.switchRoom=function(room){
+currentRoom=room;
+document.getElementById("messages").innerHTML="";
+if(chatRef) off(chatRef);
+listenRoom();
+};
 
-onChildAdded(ref(db,`${ROOT}/chat/${room}`),(snap)=>{
+/* =====================
+   チャット
+===================== */
+function listenRoom(){
+
+chatRef=ref(db,`${ROOT}/chat/${currentRoom}`);
+
+onChildAdded(chatRef,(snap)=>{
 
 const d=snap.val();
+const key=snap.key;
+
+const date=new Date(d.time||Date.now());
+const time=date.getHours()+":"+String(date.getMinutes()).padStart(2,"0");
 
 const div=document.createElement("div");
-div.className="msg";
+div.className="message";
 
 div.innerHTML=`
-<div class="name ${d.isAdmin ? "admin":""}">
-${d.name}
+<img class="avatar" src="https://via.placeholder.com/30">
+
+<div class="bubbleWrap">
+
+<div class="name ${d.isAdmin ? "admin" : ""}">
+<b>${d.name}</b>
+<span class="time">${time}</span>
 </div>
-<div>${d.text}</div>
+
+<div class="bubble">${d.text}</div>
+
+<button class="deleteBtn">削除</button>
+
+</div>
 `;
 
-box.appendChild(div);
+/* 削除 */
+div.querySelector(".deleteBtn").onclick=()=>{
+remove(ref(db,`${ROOT}/chat/${currentRoom}/${key}`));
+};
+
+document.getElementById("messages").appendChild(div);
+
 });
+
 }
+
+/* =====================
+   オンライン
+===================== */
+onValue(ref(db,`${ROOT}/users`),(snap)=>{
+const data=snap.val()||{};
+let online="";
+Object.values(data).forEach(u=>{
+if(u.online) online+=u.name+" ";
+});
+document.getElementById("online").innerText=online;
+});
 
 </script>
 
