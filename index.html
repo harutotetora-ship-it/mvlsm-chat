@@ -2,11 +2,190 @@
 <html lang="ja">
 <head>
 <meta charset="UTF-8">
-<title>MVLsmデバッグ版</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MVLsmチャット</title>
+
+<style>
+body{
+margin:0;
+font-family:sans-serif;
+background:#1e1f22;
+color:white;
+}
+
+#layout{display:flex;height:100vh;}
+
+#sidebar{
+width:180px;
+background:#2b2d31;
+padding:10px;
+}
+
+#sidebar button{
+width:100%;
+margin:5px 0;
+padding:8px;
+border:none;
+border-radius:5px;
+background:#40444b;
+color:white;
+cursor:pointer;
+}
+
+#chatArea{
+flex:1;
+display:flex;
+flex-direction:column;
+background:#313338;
+}
+
+#topBar{
+padding:10px;
+background:#2b2d31;
+font-size:14px;
+}
+
+#messages{
+flex:1;
+overflow-y:auto;
+padding:10px;
+}
+
+/* 吹き出し */
+.message{
+display:flex;
+margin:10px 0;
+}
+
+.message.me{flex-direction:row-reverse;text-align:right;}
+
+.avatar{
+width:32px;height:32px;border-radius:50%;margin:5px;
+}
+
+.bubbleWrap{max-width:70%;display:flex;flex-direction:column;}
+
+.message.me .bubbleWrap{align-items:flex-end;}
+
+.name{font-size:12px;color:#bbb;}
+
+.time{font-size:10px;color:#888;margin-left:5px;}
+
+.bubble{
+background:#40444b;
+padding:10px;
+border-radius:15px;
+margin-top:3px;
+word-break:break-word;
+}
+
+.message.me .bubble{background:#5865f2;color:white;}
+
+.reply{
+font-size:11px;
+color:#aaa;
+border-left:2px solid #5865f2;
+padding-left:6px;
+margin-bottom:4px;
+}
+
+/* ボタン */
+button{cursor:pointer;}
+
+.replyBtn,.deleteBtn{
+font-size:10px;
+background:none;
+border:none;
+color:#aaa;
+margin-top:4px;
+}
+
+.replyBtn:hover,.deleteBtn:hover{color:white;}
+
+#inputArea{
+display:flex;
+padding:10px;
+background:#2b2d31;
+}
+
+#msg{
+flex:1;
+padding:10px;
+border:none;
+border-radius:5px;
+outline:none;
+}
+
+.send{
+margin-left:5px;
+padding:10px;
+border:none;
+border-radius:5px;
+background:#5865f2;
+color:white;
+}
+
+#iconBox{
+display:flex;
+padding:5px;
+background:#2b2d31;
+}
+
+#iconUrl{
+flex:1;
+padding:8px;
+border:none;
+border-radius:5px;
+}
+
+#login{
+max-width:300px;
+margin:100px auto;
+background:#2b2d31;
+padding:20px;
+border-radius:10px;
+}
+</style>
 </head>
+
 <body>
 
+<div id="login">
+<h2>MVLsmチャット</h2>
+<input id="name" placeholder="名前">
+<input type="password" id="pass" placeholder="パスワード">
+<button id="loginBtn">入室</button>
+<p id="error"></p>
+</div>
+
+<div id="layout" style="display:none;">
+
+<div id="sidebar">
+<button onclick="switchRoom('zatsudan')">⭐ 雑談</button>
+<button onclick="switchRoom('bug')">🐛 バグ報告</button>
+<button onclick="switchRoom('update')">📢 アップデート案</button>
+</div>
+
+<div id="chatArea">
+
+<div id="topBar">
+🟢 オンライン: <span id="online"></span>
+</div>
+
 <div id="messages"></div>
+
+<div id="iconBox">
+<input id="iconUrl" placeholder="アイコンURL">
+<button id="iconBtn">アイコン設定</button>
+</div>
+
+<div id="inputArea">
+<input id="msg" placeholder="メッセージ">
+<button class="send" id="sendBtn">送信</button>
+</div>
+
+</div>
+</div>
 
 <script type="module">
 
@@ -14,7 +193,12 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebas
 import {
 getDatabase,
 ref,
+set,
+push,
+onValue,
 onChildAdded,
+onDisconnect,
+off,
 remove
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
 
@@ -27,46 +211,172 @@ projectId:"xxx"
 
 const db = getDatabase(app);
 
-/* チャット監視 */
-const chatRef = ref(db,"chat/zatsudan");
+const userId = crypto.randomUUID();
+let username="名無し";
+let currentRoom="zatsudan";
+let users={};
+let chatRef=null;
+let replyTarget=null;
+
+/* ログイン */
+document.getElementById("loginBtn").onclick=()=>{
+
+const pass=document.getElementById("pass").value;
+username=document.getElementById("name").value||"名無し";
+
+if(pass!=="MvLO"){
+document.getElementById("error").innerText="パスワードミス";
+return;
+}
+
+document.getElementById("login").style.display="none";
+document.getElementById("layout").style.display="flex";
+
+set(ref(db,"users/"+userId),{
+name:username,
+icon:"https://via.placeholder.com/30",
+online:true
+});
+
+onDisconnect(ref(db,"users/"+userId)).set({
+name:username,
+online:false
+});
+
+};
+
+/* アイコン */
+document.getElementById("iconBtn").onclick=()=>{
+const url=document.getElementById("iconUrl").value;
+if(!url) return;
+set(ref(db,"users/"+userId+"/icon"),url);
+};
+
+/* 部屋 */
+window.switchRoom=function(room){
+currentRoom=room;
+document.getElementById("messages").innerHTML="";
+
+if(chatRef) off(chatRef);
+
+listenRoom();
+};
+
+/* 返信 */
+function setReply(text){
+replyTarget=text;
+document.getElementById("msg").placeholder="返信: "+text.slice(0,20);
+}
+
+/* 送信 */
+function sendMsg(){
+
+const msg=document.getElementById("msg").value;
+if(!msg) return;
+
+const newRef=push(ref(db,"chat/"+currentRoom));
+
+set(newRef,{
+userId,
+name:username,
+text:msg,
+time:Date.now(),
+reply:replyTarget
+});
+
+replyTarget=null;
+document.getElementById("msg").value="";
+document.getElementById("msg").placeholder="メッセージ";
+}
+
+document.getElementById("sendBtn").onclick=sendMsg;
+
+/* Enter（確実版） */
+document.addEventListener("keydown",(e)=>{
+if(e.key==="Enter" && document.activeElement.id==="msg"){
+sendMsg();
+}
+});
+
+/* オンライン */
+onValue(ref(db,"users"),snap=>{
+users=snap.val()||{};
+let online="";
+Object.keys(users).forEach(id=>{
+if(users[id]?.online) online+=users[id].name+" ";
+});
+document.getElementById("online").innerText=online;
+});
+
+/* チャット */
+function listenRoom(){
+
+if(chatRef) off(chatRef);
+
+chatRef=ref(db,"chat/"+currentRoom);
 
 onChildAdded(chatRef,(snap)=>{
 
-const d = snap.val();
-const key = snap.key;
+const d=snap.val();
+const key=snap.key;
 
-/* 表示 */
-const div = document.createElement("div");
+const u=users?.[d.userId];
+const icon=u?.icon||"https://via.placeholder.com/30";
 
-div.innerHTML = `
-<b>${d.name}</b>: ${d.text}
-<button class="del">削除</button>
+/* 時間 */
+const date=new Date(d.time||Date.now());
+
+const time=
+date.getFullYear()+"/"+
+String(date.getMonth()+1).padStart(2,"0")+"/"+
+String(date.getDate()).padStart(2,"0")+" "+
+String(date.getHours()).padStart(2,"0")+":"+
+String(date.getMinutes()).padStart(2,"0");
+
+const isMe=d.userId===userId;
+
+const div=document.createElement("div");
+div.className="message "+(isMe?"me":"other");
+
+div.innerHTML=`
+<img class="avatar" src="${icon}">
+
+<div class="bubbleWrap">
+
+<div class="name">
+<b>${d.name}</b>
+<span class="time">${time}</span>
+</div>
+
+${d.reply?`<div class="reply">↩ ${d.reply}</div>`:""}
+
+<div class="bubble">${d.text}</div>
+
+<div>
+<button class="replyBtn">返信</button>
+${isMe?`<button class="deleteBtn">削除</button>`:""}
+</div>
+
+</div>
 `;
+
+/* 返信 */
+div.querySelector(".replyBtn").onclick=()=>{
+setReply(d.text);
+};
+
+/* 🗑 削除（確実版） */
+div.querySelector(".deleteBtn")?.addEventListener("click",()=>{
+remove(ref(db,"chat/"+currentRoom+"/"+key));
+});
 
 document.getElementById("messages").appendChild(div);
 
-/* 🧨削除デバッグ */
-div.querySelector(".del").addEventListener("click",()=>{
-
-console.log("===== 削除テスト =====");
-console.log("key:", key);
-console.log("path:", "chat/zatsudan/" + key);
-
-/* 実際の削除 */
-remove(ref(db,"chat/zatsudan/"+key))
-.then(()=>{
-console.log("✅ 削除成功");
-alert("削除成功");
-})
-.catch((err)=>{
-console.log("❌ 削除失敗");
-console.error(err);
-alert("削除失敗: " + err.message);
 });
 
-});
+}
 
-});
+listenRoom();
 
 </script>
 
