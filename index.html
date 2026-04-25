@@ -50,40 +50,18 @@ overflow-y:auto;
 padding:10px;
 }
 
-.message{
-display:flex;
-margin:10px 0;
-}
+.message{margin:10px 0;}
 
 .avatar{
-width:32px;
-height:32px;
-border-radius:50%;
-margin:5px;
-}
-
-.bubbleWrap{
-max-width:70%;
-display:flex;
-flex-direction:column;
-}
-
-.name{
-font-size:12px;
-color:#bbb;
-}
-
-.time{
-font-size:10px;
-color:#888;
-margin-left:5px;
+width:32px;height:32px;border-radius:50%;
+margin-right:8px;
 }
 
 .bubble{
 background:#40444b;
 padding:10px;
 border-radius:10px;
-word-break:break-word;
+display:inline-block;
 }
 
 .admin b{
@@ -212,27 +190,21 @@ let currentRoom="zatsudan";
 let isAdmin=false;
 let chatRef;
 
-/* ===== 送信 ===== */
-function sendMessage(){
-
-const input=document.getElementById("msg");
-if(!input.value) return;
-
-push(ref(db,`${ROOT}/chat/${currentRoom}`),{
-userId,
-name:username,
-text:input.value,
-time:Date.now(),
-isAdmin:isAdmin
-});
-
-input.value="";
-}
-
-/* ===== 起動 ===== */
+/* ======================
+   安全起動（ここ重要）
+====================== */
 window.addEventListener("DOMContentLoaded",()=>{
 
-document.getElementById("loginBtn").onclick=()=>{
+const loginBtn=document.getElementById("loginBtn");
+const adminBtn=document.getElementById("adminBtn");
+const sendBtn=document.getElementById("sendBtn");
+const msg=document.getElementById("msg");
+
+/* nullガード */
+if(!loginBtn||!adminBtn||!sendBtn||!msg) return;
+
+/* 入室 */
+loginBtn.onclick=()=>{
 
 const pass=document.getElementById("pass").value;
 username=document.getElementById("name").value||"名無し";
@@ -257,7 +229,7 @@ listenRoom();
 };
 
 /* 管理者 */
-document.getElementById("adminBtn").onclick=()=>{
+adminBtn.onclick=()=>{
 const pass=prompt("管理者パスワード");
 if(pass==="admin123"){
 isAdmin=true;
@@ -267,9 +239,11 @@ alert("違う");
 }
 };
 
-document.getElementById("sendBtn").onclick=sendMessage;
+/* 送信 */
+sendBtn.onclick=sendMessage;
 
-document.getElementById("msg").addEventListener("keydown",(e)=>{
+/* Enter */
+msg.addEventListener("keydown",(e)=>{
 if(e.key==="Enter"){
 e.preventDefault();
 sendMessage();
@@ -278,15 +252,43 @@ sendMessage();
 
 });
 
-/* ===== ルーム ===== */
+/* ======================
+   送信
+====================== */
+function sendMessage(){
+
+const input=document.getElementById("msg");
+if(!input||!input.value) return;
+
+push(ref(db,`${ROOT}/chat/${currentRoom}`),{
+userId,
+name:username,
+text:input.value,
+time:Date.now(),
+isAdmin:isAdmin
+});
+
+input.value="";
+}
+
+/* ======================
+   ルーム
+====================== */
 window.switchRoom=function(room){
+
 currentRoom=room;
-document.getElementById("messages").innerHTML="";
+
+const m=document.getElementById("messages");
+if(m) m.innerHTML="";
+
 if(chatRef) off(chatRef);
+
 listenRoom();
 };
 
-/* ===== チャット ===== */
+/* ======================
+   チャット
+====================== */
 function listenRoom(){
 
 chatRef=ref(db,`${ROOT}/chat/${currentRoom}`);
@@ -305,31 +307,38 @@ div.className="message";
 div.innerHTML=`
 <img class="avatar" src="https://via.placeholder.com/30">
 
-<div class="bubbleWrap">
-
-<div class="name ${d.isAdmin ? "admin" : ""}">
+<div>
+<div class="${d.isAdmin ? "admin" : ""}">
 <b>${d.name||"名無し"}</b>
-<span class="time">${time}</span>
+<span style="font-size:10px;color:#888">${time}</span>
 </div>
 
 <div class="bubble">${d.text||""}</div>
-
 </div>
 `;
 
-document.getElementById("messages").appendChild(div);
+document.getElementById("messages")?.appendChild(div);
 
 });
 }
 
-/* ===== オンライン ===== */
+/* ======================
+   オンライン
+====================== */
 onValue(ref(db,`${ROOT}/users`),(snap)=>{
+
+const el=document.getElementById("online");
+if(!el) return;
+
 const data=snap.val()||{};
 let online="";
+
 Object.values(data).forEach(u=>{
 if(u.online) online+=u.name+" ";
 });
-document.getElementById("online").innerText=online;
+
+el.innerText=online;
+
 });
 
 </script>
