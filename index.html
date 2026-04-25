@@ -2,16 +2,73 @@
 <html lang="ja">
 <head>
 <meta charset="UTF-8">
-<title>Firebaseテスト</title>
+<title>smチャット</title>
+
+<style>
+body{
+margin:0;
+font-family:sans-serif;
+background:#1e1f22;
+color:white;
+}
+
+#wrap{
+max-width:700px;
+margin:20px auto;
+}
+
+#log{
+height:400px;
+overflow:auto;
+background:#2b2d31;
+padding:10px;
+border-radius:8px;
+}
+
+.msg{
+background:#40444b;
+margin:6px 0;
+padding:8px;
+border-radius:6px;
+word-break:break-word;
+}
+
+.me{background:#5865f2;}
+
+#input{
+display:flex;
+margin-top:10px;
+}
+
+#text{
+flex:1;
+padding:10px;
+}
+
+button{
+padding:10px;
+border:none;
+background:#5865f2;
+color:white;
+cursor:pointer;
+}
+</style>
 </head>
+
 <body>
 
-<h2>Firebaseテスト</h2>
+<div id="wrap">
 
-<input id="text" placeholder="テスト入力">
-<button id="send">送信</button>
+<h2>smチャット</h2>
 
 <div id="log"></div>
+
+<div id="input">
+<input id="text" placeholder="メッセージ">
+<button id="send">送信</button>
+</div>
+
+</div>
 
 <script type="module">
 
@@ -21,10 +78,11 @@ getDatabase,
 ref,
 push,
 set,
-onChildAdded
+onValue,
+remove
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
 
-/* 🔥ここだけ自分のFirebase */
+/* 🔥Firebase設定 */
 const app = initializeApp({
 apiKey: "xxx",
 authDomain: "xxx",
@@ -34,16 +92,22 @@ projectId: "xxx"
 
 const db = getDatabase(app);
 
-/* 書き込み */
+const room = "smchat";
+const userId = crypto.randomUUID();
+
+/* =====================
+   送信
+===================== */
 document.getElementById("send").onclick = () => {
 
 const val = document.getElementById("text").value;
 if(!val) return;
 
-const r = push(ref(db,"test"));
+const r = push(ref(db, room));
 
 set(r,{
 text: val,
+user: userId,
 time: Date.now()
 });
 
@@ -51,15 +115,33 @@ document.getElementById("text").value = "";
 
 };
 
-/* 読み込み */
-onChildAdded(ref(db,"test"),(snap)=>{
+/* =====================
+   表示（完全安定）
+===================== */
+onValue(ref(db, room), (snap) => {
 
-const d = snap.val();
+const log = document.getElementById("log");
+log.innerHTML = "";
+
+const data = snap.val();
+
+if(!data){
+log.innerHTML = "まだメッセージなし";
+return;
+}
+
+Object.keys(data).forEach((key) => {
+
+const d = data[key];
 
 const div = document.createElement("div");
-div.innerText = d.text;
+div.className = "msg " + (d.user === userId ? "me" : "");
 
-document.getElementById("log").appendChild(div);
+div.innerText = d?.text ?? "";
+
+log.appendChild(div);
+
+});
 
 });
 
@@ -67,7 +149,3 @@ document.getElementById("log").appendChild(div);
 
 </body>
 </html>
-<script>
-console.log("JS動いてる");
-alert("動作テストOK");
-</script>
