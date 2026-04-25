@@ -18,6 +18,7 @@ display:flex;
 height:100vh;
 }
 
+/* サイドバー */
 #sidebar{
 width:180px;
 background:#2b2d31;
@@ -40,6 +41,7 @@ cursor:pointer;
 background:#5865f2;
 }
 
+/* チャット */
 #chatArea{
 flex:1;
 display:flex;
@@ -53,12 +55,42 @@ background:#2b2d31;
 font-size:14px;
 }
 
+/* 💬 メッセージUI強化 */
 #messages{
 flex:1;
 overflow-y:auto;
-padding:10px;
+padding:12px;
+font-size:20px;
 }
 
+#messages div{
+margin:10px 0;
+line-height:1.6;
+}
+
+/* 名前 */
+#messages b{
+font-size:20px;
+margin-right:6px;
+}
+
+/* 時間 */
+.time{
+font-size:12px;
+color:#aaa;
+margin-left:6px;
+}
+
+/* アイコン */
+#messages img{
+width:32px;
+height:32px;
+border-radius:50%;
+vertical-align:middle;
+margin-right:6px;
+}
+
+/* 入力 */
 #inputArea{
 display:flex;
 padding:10px;
@@ -67,7 +99,8 @@ background:#2b2d31;
 
 #msg{
 flex:1;
-padding:10px;
+padding:12px;
+font-size:16px;
 border:none;
 border-radius:5px;
 outline:none;
@@ -83,6 +116,7 @@ color:white;
 cursor:pointer;
 }
 
+/* ログイン */
 #login{
 max-width:300px;
 margin:100px auto;
@@ -104,6 +138,7 @@ border:none;
 
 <body>
 
+<!-- ログイン -->
 <div id="login">
 <h2>MVLsmチャット</h2>
 <input id="name" placeholder="名前">
@@ -112,6 +147,7 @@ border:none;
 <p id="error"></p>
 </div>
 
+<!-- 本体 -->
 <div id="layout" style="display:none;">
 
 <div id="sidebar">
@@ -172,29 +208,7 @@ const userId = crypto.randomUUID();
 let username = "名無し";
 let currentRoom = "zatsudan";
 let users = {};
-
-/* 🔥 重複防止 */
 let chatRef = null;
-let sending = false;
-
-/* =====================
-   200文字制限
-===================== */
-function limitText(text, max = 200){
-text = String(text || "");
-if(text.length > max){
-return text.slice(0, max) + " (以下略)";
-}
-return text;
-}
-
-function safe(text){
-return limitText(
-String(text)
-.replace(/</g,"&lt;")
-.replace(/>/g,"&gt;")
-);
-}
 
 /* =====================
    ログイン
@@ -235,7 +249,6 @@ window.switchRoom = function(room){
 currentRoom = room;
 document.getElementById("messages").innerHTML="";
 
-/* 🔥 完全解除 */
 if(chatRef){
 off(chatRef);
 chatRef = null;
@@ -254,26 +267,18 @@ set(ref(db,"users/"+userId+"/icon"), url);
 };
 
 /* =====================
-   送信（重複防止）
+   送信
 ===================== */
 function sendMsg(){
 
-if(sending) return;
-sending = true;
-
 const msg = document.getElementById("msg").value;
-if(!msg){
-sending = false;
-return;
-}
+if(!msg) return;
 
 push(ref(db,"chat/"+currentRoom),{
 userId,
 name:username,
 text:msg,
 time:Date.now()
-}).then(()=>{
-sending = false;
 });
 
 document.getElementById("msg").value="";
@@ -307,13 +312,9 @@ document.getElementById("online").innerText = online;
 });
 
 /* =====================
-   チャット受信（完全安定）
+   チャット受信（時間付きUI）
 ===================== */
 function listenRoom(){
-
-if(chatRef){
-off(chatRef);
-}
 
 chatRef = ref(db,"chat/"+currentRoom);
 
@@ -324,11 +325,19 @@ const u = users?.[d.userId];
 
 const icon = u?.icon || "https://via.placeholder.com/30";
 
+/* ⏰ 時間 */
+const date = new Date(d.time);
+const hh = String(date.getHours()).padStart(2,"0");
+const mm = String(date.getMinutes()).padStart(2,"0");
+const time = hh + ":" + mm;
+
 const div = document.createElement("div");
 
 div.innerHTML =
-"<img src='"+icon+"' width='20' style='border-radius:50%;vertical-align:middle;margin-right:5px;'> " +
-"<b>"+safe(d.name)+"</b>: "+safe(d.text);
+"<img src='"+icon+"'> " +
+"<b>"+d.name+"</b> " +
+"<span class='time'>"+time+"</span><br>" +
+d.text;
 
 document.getElementById("messages").appendChild(div);
 
