@@ -18,6 +18,7 @@ display:flex;
 height:100vh;
 }
 
+/* サイドバー */
 #sidebar{
 width:180px;
 background:#2b2d31;
@@ -40,6 +41,7 @@ cursor:pointer;
 background:#5865f2;
 }
 
+/* チャット */
 #chatArea{
 flex:1;
 display:flex;
@@ -318,12 +320,18 @@ document.getElementById("msg").value="";
 
 document.getElementById("sendBtn").onclick = sendMsg;
 
-/* Enter送信（確実版） */
-document.getElementById("msg").addEventListener("keydown",(e)=>{
+/* 👇🔥 Enter確実版 */
+window.addEventListener("DOMContentLoaded", () => {
+
+const input = document.getElementById("msg");
+
+input.addEventListener("keydown",(e)=>{
 if(e.key === "Enter"){
 e.preventDefault();
 sendMsg();
 }
+});
+
 });
 
 /* オンライン */
