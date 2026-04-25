@@ -52,7 +52,6 @@ padding:10px;
 }
 
 .message{
-display:flex;
 margin:10px 0;
 }
 
@@ -60,7 +59,12 @@ margin:10px 0;
 width:32px;
 height:32px;
 border-radius:50%;
-margin:5px;
+margin-right:5px;
+}
+
+.wrap{
+display:flex;
+align-items:flex-start;
 }
 
 .bubbleWrap{
@@ -87,6 +91,16 @@ border-radius:10px;
 word-break:break-word;
 }
 
+/* 返信表示 */
+.replyBox{
+font-size:11px;
+color:#aaa;
+border-left:2px solid #5865f2;
+padding-left:6px;
+margin-bottom:4px;
+}
+
+/* 入力 */
 #inputArea{
 display:flex;
 padding:10px;
@@ -114,6 +128,7 @@ background:#5865f2;
 color:white;
 }
 
+/* ログイン */
 #login{
 max-width:300px;
 margin:100px auto;
@@ -178,7 +193,6 @@ push,
 onValue,
 onChildAdded,
 onDisconnect,
-remove,
 off
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
 
@@ -195,20 +209,14 @@ appId: "1:720432898013:web:3fc9bb90082235ab506034"
 const app = initializeApp(firebaseConfig);
 const db = getDatabase(app);
 
-/* =====================
-   smchat統一ルール
-===================== */
-const ROOT = "smchat";
+const ROOT="smchat";
 
-let userId = localStorage.getItem("uid");
-if(!userId){
-userId = crypto.randomUUID();
+let userId=localStorage.getItem("uid")||crypto.randomUUID();
 localStorage.setItem("uid",userId);
-}
 
 let username="名無し";
 let currentRoom="zatsudan";
-let isAdmin=false;
+let replyTarget=null;
 let chatRef;
 
 /* =====================
@@ -223,10 +231,12 @@ push(ref(db,`${ROOT}/chat/${currentRoom}`),{
 userId,
 name:username,
 text:input.value,
-time:Date.now()
+time:Date.now(),
+reply:replyTarget
 });
 
 input.value="";
+replyTarget=null;
 }
 
 /* =====================
@@ -234,7 +244,6 @@ input.value="";
 ===================== */
 window.addEventListener("DOMContentLoaded",()=>{
 
-/* 入室 */
 document.getElementById("loginBtn").onclick=()=>{
 
 const pass=document.getElementById("pass").value;
@@ -256,15 +265,11 @@ online:true
 onDisconnect(ref(db,`${ROOT}/users/${userId}`)).set({online:false});
 
 listenRoom();
-
 };
 
-/* 送信 */
 document.getElementById("sendBtn").onclick=sendMessage;
 
-/* Enter確実 */
-const input=document.getElementById("msg");
-input.addEventListener("keydown",(e)=>{
+document.getElementById("msg").addEventListener("keydown",(e)=>{
 if(e.key==="Enter"){
 e.preventDefault();
 sendMessage();
@@ -272,6 +277,14 @@ sendMessage();
 });
 
 });
+
+/* =====================
+   返信
+===================== */
+window.replyTo=function(text){
+replyTarget=text;
+document.getElementById("msg").placeholder="返信: "+text.slice(0,20);
+};
 
 /* =====================
    ルーム
@@ -284,7 +297,7 @@ listenRoom();
 };
 
 /* =====================
-   チャット
+   チャット表示
 ===================== */
 function listenRoom(){
 
@@ -293,7 +306,6 @@ chatRef=ref(db,`${ROOT}/chat/${currentRoom}`);
 onChildAdded(chatRef,(snap)=>{
 
 const d=snap.val();
-const key=snap.key;
 
 const date=new Date(d.time||Date.now());
 const time=date.getHours()+":"+String(date.getMinutes()).padStart(2,"0");
@@ -302,6 +314,8 @@ const div=document.createElement("div");
 div.className="message";
 
 div.innerHTML=`
+<div class="wrap">
+
 <img class="avatar" src="https://via.placeholder.com/30">
 
 <div class="bubbleWrap">
@@ -311,17 +325,16 @@ div.innerHTML=`
 <span class="time">${time}</span>
 </div>
 
+${d.reply ? `<div class="replyBox">↩ ${d.reply}</div>` : ""}
+
 <div class="bubble">${d.text}</div>
 
-<button class="deleteBtn">削除</button>
+<button onclick="replyTo('${d.text}')">返信</button>
+
+</div>
 
 </div>
 `;
-
-/* 削除（誰でもOK版） */
-div.querySelector(".deleteBtn").onclick=()=>{
-remove(ref(db,`${ROOT}/chat/${currentRoom}/${key}`));
-};
 
 document.getElementById("messages").appendChild(div);
 
