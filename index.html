@@ -41,7 +41,7 @@ cursor:pointer;
 background:#5865f2;
 }
 
-/* チャット */
+/* メイン */
 #chatArea{
 flex:1;
 display:flex;
@@ -98,7 +98,7 @@ margin-left:6px;
 }
 
 .bubble{
-padding:10px 12px;
+padding:10px;
 border-radius:15px;
 background:#40444b;
 word-break:break-word;
@@ -133,23 +133,20 @@ color:white;
 cursor:pointer;
 }
 
-/* ログイン */
-#login{
-max-width:300px;
-margin:100px auto;
+/* アイコン設定 */
+#iconBox{
+display:flex;
+padding:5px;
 background:#2b2d31;
-padding:20px;
-border-radius:10px;
-text-align:center;
 }
 
-input{
-width:90%;
-padding:10px;
-margin:5px;
-border-radius:5px;
+#iconUrl{
+flex:1;
+padding:8px;
 border:none;
+border-radius:5px;
 }
+
 </style>
 </head>
 
@@ -181,10 +178,10 @@ border:none;
 
 <div id="messages"></div>
 
-<!-- 🖼 アイコン設定（復活） -->
-<div style="padding:5px;background:#2b2d31;display:flex;">
-<input id="iconUrl" placeholder="アイコンURL" style="flex:1;padding:8px;border:none;border-radius:5px;">
-<button id="iconBtn">アイコン設定</button>
+<!-- アイコン -->
+<div id="iconBox">
+<input id="iconUrl" placeholder="アイコンURL">
+<button id="iconBtn">設定</button>
 </div>
 
 <!-- 入力 -->
@@ -229,7 +226,7 @@ let currentRoom = "zatsudan";
 let users = {};
 let chatRef = null;
 
-/* ================= ログイン ================= */
+/* ログイン */
 document.getElementById("loginBtn").onclick = () => {
 
 const pass = document.getElementById("pass").value;
@@ -243,22 +240,21 @@ return;
 document.getElementById("login").style.display="none";
 document.getElementById("layout").style.display="flex";
 
-const uref = ref(db,"users/"+userId);
-
-set(uref,{
+/* ユーザー登録 */
+set(ref(db,"users/"+userId),{
 name:username,
 icon:"https://via.placeholder.com/30",
 online:true
 });
 
-onDisconnect(uref).set({
+onDisconnect(ref(db,"users/"+userId)).set({
 name:username,
 online:false
 });
 
 };
 
-/* ================= アイコン設定（復活） ================= */
+/* アイコン */
 document.getElementById("iconBtn").onclick = () => {
 
 const url = document.getElementById("iconUrl").value;
@@ -268,7 +264,7 @@ set(ref(db,"users/"+userId+"/icon"), url);
 
 };
 
-/* ================= 部屋 ================= */
+/* 部屋 */
 window.switchRoom = function(room){
 
 currentRoom = room;
@@ -279,7 +275,7 @@ if(chatRef) off(chatRef);
 listenRoom();
 };
 
-/* ================= 送信 ================= */
+/* 送信 */
 function sendMsg(){
 
 const msg = document.getElementById("msg").value;
@@ -297,14 +293,7 @@ document.getElementById("msg").value="";
 
 document.getElementById("sendBtn").onclick = sendMsg;
 
-document.getElementById("msg").addEventListener("keydown",(e)=>{
-if(e.key==="Enter"){
-e.preventDefault();
-sendMsg();
-}
-});
-
-/* ================= オンライン ================= */
+/* オンライン */
 onValue(ref(db,"users"),(snap)=>{
 
 users = snap.val() || {};
@@ -320,7 +309,7 @@ document.getElementById("online").innerText = online;
 
 });
 
-/* ================= チャット ================= */
+/* チャット */
 function listenRoom(){
 
 chatRef = ref(db,"chat/"+currentRoom);
@@ -335,10 +324,7 @@ const icon = u?.icon || "https://via.placeholder.com/30";
 const date = new Date(d.time || Date.now());
 
 const time =
-date.getFullYear()+"/"+
-String(date.getMonth()+1).padStart(2,"0")+"/"+
-String(date.getDate()).padStart(2,"0")+" "+
-String(date.getHours()).padStart(2,"0")+":"+
+String(date.getHours()).padStart(2,"0") + ":" +
 String(date.getMinutes()).padStart(2,"0");
 
 const isMe = d.userId === userId;
