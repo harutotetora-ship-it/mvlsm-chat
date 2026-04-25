@@ -36,6 +36,10 @@ color:white;
 cursor:pointer;
 }
 
+#sidebar button:hover{
+background:#5865f2;
+}
+
 #chatArea{
 flex:1;
 display:flex;
@@ -117,13 +121,16 @@ margin-bottom:4px;
 }
 
 /* ボタン */
-.replyBtn, .deleteBtn{
+button{
+cursor:pointer;
+}
+
+.replyBtn,.deleteBtn{
 font-size:10px;
 margin-top:4px;
 background:none;
 border:none;
 color:#aaa;
-cursor:pointer;
 }
 
 .replyBtn:hover,
@@ -153,7 +160,6 @@ border:none;
 border-radius:5px;
 background:#5865f2;
 color:white;
-cursor:pointer;
 }
 
 #iconBox{
@@ -255,7 +261,7 @@ appId: "1:720432898013:web:3fc9bb90082235ab506034"
 const app = initializeApp(firebaseConfig);
 const db = getDatabase(app);
 
-/* 💥固定userId（ここ超重要） */
+/* 💥完全固定ID（削除バグ防止） */
 let userId = localStorage.getItem("uid");
 if(!userId){
 userId = crypto.randomUUID();
@@ -377,10 +383,10 @@ const icon = u?.icon || "https://via.placeholder.com/30";
 const date = new Date(d.time || Date.now());
 
 const time =
-date.getFullYear() + "/" +
-String(date.getMonth()+1).padStart(2,"0") + "/" +
-String(date.getDate()).padStart(2,"0") + " " +
-String(date.getHours()).padStart(2,"0") + ":" +
+date.getFullYear()+"/"+
+String(date.getMonth()+1).padStart(2,"0")+"/"+
+String(date.getDate()).padStart(2,"0")+" "+
+String(date.getHours()).padStart(2,"0")+":"+
 String(date.getMinutes()).padStart(2,"0");
 
 const isMe = d.userId === userId;
@@ -403,7 +409,7 @@ ${d.reply ? `<div class="reply">↩ ${d.reply}</div>` : ""}
 <div class="bubble">${d.text}</div>
 
 <button class="replyBtn">返信</button>
-${isMe ? `<button class="deleteBtn">削除</button>` : ""}
+<button class="deleteBtn">削除</button>
 
 </div>
 `;
@@ -413,10 +419,10 @@ div.querySelector(".replyBtn").onclick = () => {
 setReply(d.text);
 };
 
-/* 💥削除（確実版） */
-div.querySelector(".deleteBtn")?.addEventListener("click", () => {
+/* 💥削除（完全版） */
+div.querySelector(".deleteBtn").onclick = () => {
 remove(ref(db,"chat/"+currentRoom+"/"+key));
-});
+};
 
 document.getElementById("messages").appendChild(div);
 
