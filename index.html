@@ -103,6 +103,23 @@ word-break:break-word;
 background:#5865f2;
 }
 
+/* 管理者虹色 */
+.admin b{
+background: linear-gradient(
+90deg,
+red, orange, yellow, green, cyan, blue, violet
+);
+-webkit-background-clip: text;
+color: transparent;
+animation: rainbow 2s linear infinite;
+}
+
+@keyframes rainbow{
+0%{filter:hue-rotate(0deg);}
+100%{filter:hue-rotate(360deg);}
+}
+
+/* ボタン */
 .replyBtn,.deleteBtn{
 font-size:10px;
 margin-top:4px;
@@ -167,6 +184,7 @@ border-radius:5px;
 <input id="name" placeholder="名前">
 <input type="password" id="pass" placeholder="パスワード">
 <button id="loginBtn">入室</button>
+<button id="adminBtn">管理者確認</button>
 <p id="error"></p>
 </div>
 
@@ -205,8 +223,6 @@ push,
 onValue,
 onChildAdded,
 onDisconnect,
-get,
-child,
 remove,
 off
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
@@ -224,26 +240,38 @@ appId: "1:720432898013:web:3fc9bb90082235ab506034"
 const app = initializeApp(firebaseConfig);
 const db = getDatabase(app);
 
-/* ======================
-   トリップキー生成
-====================== */
-function makeTrip(){
-return Math.random().toString(36).substring(2,8);
+/* =====================
+   状態
+===================== */
+let userId = localStorage.getItem("uid");
+if(!userId){
+userId = crypto.randomUUID();
+localStorage.setItem("uid",userId);
 }
 
-/* ======================
-   ユーザー情報
-====================== */
-let userId;
-let username = "名無し";
-let tripKey;
-let currentRoom = "zatsudan";
+let username="名無し";
+let currentRoom="zatsudan";
 let chatRef;
+let isAdmin=false;
 
-/* ======================
+/* =====================
+   管理者ボタン
+===================== */
+document.getElementById("adminBtn").onclick = () => {
+const pass = prompt("管理者パスワード");
+
+if(pass === "admin123"){
+isAdmin = true;
+alert("管理者モードON");
+}else{
+alert("違います");
+}
+};
+
+/* =====================
    ログイン
-====================== */
-document.getElementById("loginBtn").onclick = async () => {
+===================== */
+document.getElementById("loginBtn").onclick = () => {
 
 const pass = document.getElementById("pass").value;
 username = document.getElementById("name").value || "名無し";
@@ -253,37 +281,11 @@ document.getElementById("error").innerText="パスワードミス";
 return;
 }
 
-/* トリップ固定 */
-tripKey = localStorage.getItem("tripKey");
-
-if(!tripKey){
-tripKey = makeTrip();
-localStorage.setItem("tripKey",tripKey);
-}
-
-/* 復元チェック */
-const snap = await get(child(ref(db),"tripUsers/"+tripKey));
-
-if(snap.exists()){
-userId = snap.val().userId;
-}else{
-userId = crypto.randomUUID();
-set(ref(db,"tripUsers/"+tripKey),{
-userId,
-name:username,
-trip:tripKey
-});
-}
-
-/* ログイン完了 */
 document.getElementById("login").style.display="none";
 document.getElementById("layout").style.display="flex";
 
-/* users登録 */
 set(ref(db,"users/"+userId),{
 name:username,
-trip:tripKey,
-icon:"https://via.placeholder.com/30",
 online:true
 });
 
@@ -292,21 +294,19 @@ online:false
 });
 
 listenRoom();
-
 };
 
-/* ======================
+/* =====================
    送信
-====================== */
+===================== */
 document.getElementById("sendBtn").onclick = () => {
 
-const msg = document.getElementById("msg").value;
+const msg=document.getElementById("msg").value;
 if(!msg) return;
 
 push(ref(db,"chat/"+currentRoom),{
 userId,
 name:username,
-trip:tripKey,
 text:msg,
 time:Date.now()
 });
@@ -314,62 +314,59 @@ time:Date.now()
 document.getElementById("msg").value="";
 };
 
-/* ======================
+/* =====================
    ルーム
-====================== */
-window.switchRoom = function(room){
-currentRoom = room;
+===================== */
+window.switchRoom=function(room){
+currentRoom=room;
 document.getElementById("messages").innerHTML="";
 if(chatRef) off(chatRef);
 listenRoom();
 };
 
-/* ======================
-   チャット表示
-====================== */
+/* =====================
+   チャット
+===================== */
 function listenRoom(){
 
-chatRef = ref(db,"chat/"+currentRoom);
+chatRef=ref(db,"chat/"+currentRoom);
 
 onChildAdded(chatRef,(snap)=>{
 
-const d = snap.val();
-const key = snap.key;
+const d=snap.val();
+const key=snap.key;
 
-const isMe = d.userId === userId;
-
-const date = new Date(d.time||Date.now());
-const time =
+const date=new Date(d.time||Date.now());
+const time=
 date.getFullYear()+"/"+
 String(date.getMonth()+1).padStart(2,"0")+"/"+
 String(date.getDate()).padStart(2,"0")+" "+
 String(date.getHours()).padStart(2,"0")+":"+
 String(date.getMinutes()).padStart(2,"0");
 
-const div = document.createElement("div");
-div.className = "message"+(isMe?" me":"");
+const div=document.createElement("div");
+div.className="message";
 
-div.innerHTML = `
+div.innerHTML=`
 <img class="avatar" src="https://via.placeholder.com/30">
 
 <div class="bubbleWrap">
 
-<div class="name">
+<div class="name ${isAdmin ? 'admin':''}">
 <b>${d.name}</b>
-<span style="font-size:10px;color:#888">#${d.trip}</span>
+<span style="font-size:10px;color:#888">#${d.userId.slice(0,5)}</span>
 <span class="time">${time}</span>
 </div>
 
 <div class="bubble">${d.text}</div>
 
-<button class="replyBtn">返信</button>
 <button class="deleteBtn">削除</button>
 
 </div>
 `;
 
-/* 削除（全員OK） */
-div.querySelector(".deleteBtn").onclick = () => {
+/* 削除（全員） */
+div.querySelector(".deleteBtn").onclick=()=>{
 remove(ref(db,"chat/"+currentRoom+"/"+key));
 };
 
@@ -379,11 +376,13 @@ document.getElementById("messages").appendChild(div);
 
 }
 
-/* オンライン */
+/* =====================
+   オンライン
+===================== */
 onValue(ref(db,"users"),(snap)=>{
 let online="";
-const data=snap.val()||{};
-Object.values(data).forEach(u=>{
+const d=snap.val()||{};
+Object.values(d).forEach(u=>{
 if(u.online) online+=u.name+" ";
 });
 document.getElementById("online").innerText=online;
