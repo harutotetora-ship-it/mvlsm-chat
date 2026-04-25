@@ -18,7 +18,6 @@ display:flex;
 height:100vh;
 }
 
-/* サイド */
 #sidebar{
 width:180px;
 background:#2b2d31;
@@ -41,7 +40,6 @@ cursor:pointer;
 background:#5865f2;
 }
 
-/* チャット */
 #chatArea{
 flex:1;
 display:flex;
@@ -390,11 +388,12 @@ chatRef = ref(db,"chat/"+currentRoom);
 onChildAdded(chatRef,(snap)=>{
 
 const d = snap.val();
-const u = users?.[d.userId];
+const key = snap.key;
 
+const u = users?.[d.userId];
 const icon = u?.icon || "https://via.placeholder.com/30";
 
-/* 時間（確実版） */
+/* 時間 */
 const date = new Date(d.time || Date.now());
 
 const time =
@@ -436,9 +435,9 @@ div.querySelector(".replyBtn").onclick = () => {
 setReply(d.text);
 };
 
-/* 削除 */
+/* 削除（完全修正版） */
 div.querySelector(".deleteBtn")?.addEventListener("click",()=>{
-remove(ref(db,"chat/"+currentRoom+"/"+d.id));
+remove(ref(db,"chat/"+currentRoom+"/"+key));
 });
 
 document.getElementById("messages").appendChild(div);
