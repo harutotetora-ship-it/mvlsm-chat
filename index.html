@@ -18,6 +18,7 @@ display:flex;
 height:100vh;
 }
 
+/* サイド */
 #sidebar{
 width:180px;
 background:#2b2d31;
@@ -40,6 +41,7 @@ cursor:pointer;
 background:#5865f2;
 }
 
+/* チャット */
 #chatArea{
 flex:1;
 display:flex;
@@ -57,33 +59,15 @@ font-size:14px;
 flex:1;
 overflow-y:auto;
 padding:12px;
-font-size:20px;
+font-size:18px;
 }
 
 #messages div{
 margin:10px 0;
-line-height:1.6;
+line-height:1.5;
 }
 
-#messages b{
-font-size:20px;
-margin-right:6px;
-}
-
-.time{
-font-size:12px;
-color:#aaa;
-margin-left:6px;
-}
-
-#messages img{
-width:32px;
-height:32px;
-border-radius:50%;
-vertical-align:middle;
-margin-right:6px;
-}
-
+/* 入力 */
 #inputArea{
 display:flex;
 padding:10px;
@@ -92,11 +76,11 @@ background:#2b2d31;
 
 #msg{
 flex:1;
-padding:12px;
-font-size:16px;
+padding:10px;
 border:none;
 border-radius:5px;
 outline:none;
+font-size:15px;
 }
 
 button{
@@ -109,6 +93,7 @@ color:white;
 cursor:pointer;
 }
 
+/* ログイン */
 #login{
 max-width:300px;
 margin:100px auto;
@@ -130,6 +115,7 @@ border:none;
 
 <body>
 
+<!-- ログイン -->
 <div id="login">
 <h2>MVLsmチャット</h2>
 <input id="name" placeholder="名前">
@@ -138,6 +124,7 @@ border:none;
 <p id="error"></p>
 </div>
 
+<!-- 本体 -->
 <div id="layout" style="display:none;">
 
 <div id="sidebar">
@@ -153,11 +140,6 @@ border:none;
 </div>
 
 <div id="messages"></div>
-
-<div style="padding:5px;background:#2b2d31;">
-<input id="iconUrl" placeholder="アイコンURL">
-<button id="iconBtn">アイコン設定</button>
-</div>
 
 <div id="inputArea">
 <input id="msg" placeholder="メッセージ">
@@ -200,7 +182,7 @@ let currentRoom = "zatsudan";
 let users = {};
 let chatRef = null;
 
-/* ログイン */
+/* ================= ログイン ================= */
 document.getElementById("loginBtn").onclick = () => {
 
 const pass = document.getElementById("pass").value;
@@ -229,25 +211,19 @@ online:false
 
 };
 
-/* 部屋 */
+/* ================= 部屋 ================= */
 window.switchRoom = function(room){
 
 currentRoom = room;
 document.getElementById("messages").innerHTML="";
 
+/* リスナーリセット */
 if(chatRef) off(chatRef);
 
 listenRoom();
 };
 
-/* アイコン */
-document.getElementById("iconBtn").onclick = () => {
-const url = document.getElementById("iconUrl").value;
-if(!url) return;
-set(ref(db,"users/"+userId+"/icon"), url);
-};
-
-/* 送信 */
+/* ================= 送信 ================= */
 function sendMsg(){
 
 const msg = document.getElementById("msg").value;
@@ -272,7 +248,7 @@ sendMsg();
 }
 });
 
-/* オンライン */
+/* ================= オンライン ================= */
 onValue(ref(db,"users"),(snap)=>{
 
 users = snap.val() || {};
@@ -288,7 +264,7 @@ document.getElementById("online").innerText = online;
 
 });
 
-/* 💬 受信（完全版時間付き） */
+/* ================= チャット受信 ================= */
 function listenRoom(){
 
 chatRef = ref(db,"chat/"+currentRoom);
@@ -303,21 +279,20 @@ const icon = u?.icon || "https://via.placeholder.com/30";
 const t = d.time ?? Date.now();
 const date = new Date(t);
 
-const yyyy = date.getFullYear();
-const mm = String(date.getMonth()+1).padStart(2,"0");
-const dd = String(date.getDate()).padStart(2,"0");
-const hh = String(date.getHours()).padStart(2,"0");
-const min = String(date.getMinutes()).padStart(2,"0");
-
-const time = `${yyyy}/${mm}/${dd} ${hh}:${min}`;
+const time =
+date.getFullYear() + "/" +
+String(date.getMonth()+1).padStart(2,"0") + "/" +
+String(date.getDate()).padStart(2,"0") + " " +
+String(date.getHours()).padStart(2,"0") + ":" +
+String(date.getMinutes()).padStart(2,"0");
 
 const div = document.createElement("div");
 
 div.innerHTML =
-"<img src='"+icon+"'> " +
+"<img src='"+icon+"' width='28' style='border-radius:50%;vertical-align:middle;margin-right:5px'>" +
 "<b>"+d.name+"</b> " +
-"<span class='time'>"+time+"</span><br>" +
-d.text;
+"<span style='font-size:12px;color:#aaa;margin-left:6px'>"+time+"</span><br>" +
+"<span style='font-size:18px'>"+d.text+"</span>";
 
 document.getElementById("messages").appendChild(div);
 
