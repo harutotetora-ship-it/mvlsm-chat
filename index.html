@@ -29,6 +29,7 @@ border:none;
 border-radius:5px;
 background:#40444b;
 color:white;
+cursor:pointer;
 }
 
 #chatArea{
@@ -84,6 +85,16 @@ padding-left:6px;
 margin-bottom:4px;
 }
 
+.replyBtn{
+font-size:10px;
+background:none;
+border:none;
+color:#aaa;
+cursor:pointer;
+margin-top:5px;
+}
+.replyBtn:hover{color:white;}
+
 #inputArea{
 display:flex;
 padding:10px;
@@ -107,16 +118,6 @@ background:#5865f2;
 color:white;
 cursor:pointer;
 }
-
-.replyBtn{
-font-size:10px;
-background:none;
-border:none;
-color:#aaa;
-cursor:pointer;
-}
-
-.replyBtn:hover{color:white;}
 
 #login{
 max-width:300px;
@@ -268,11 +269,12 @@ name:username,
 text:input.value,
 time:Date.now(),
 isAdmin:isAdmin,
-reply:replyTarget
+reply:replyTarget || null
 });
 
 replyTarget=null;
 input.value="";
+document.getElementById("msg").placeholder="メッセージ";
 }
 
 /* ================= ルーム ================= */
@@ -293,12 +295,15 @@ onChildAdded(chatRef,(snap)=>{
 const d=snap.val();
 if(!d) return;
 
+const key=snap.key;
+
 const date=new Date(d.time||Date.now());
 const time=date.getHours()+":"+String(date.getMinutes()).padStart(2,"0");
 
 const div=document.createElement("div");
 div.className="message";
 
+/* HTML */
 div.innerHTML=`
 <img class="avatar" src="https://via.placeholder.com/30">
 
@@ -309,8 +314,7 @@ div.innerHTML=`
 <span style="font-size:10px;color:#888">${time}</span>
 </div>
 
-${d.reply ? `
-<div class="replyBox">↩ ${d.reply}</div>` : ""}
+${d.reply ? `<div class="replyBox">↩ ${d.reply}</div>` : ""}
 
 <div class="bubble">${d.text}</div>
 
@@ -319,12 +323,13 @@ ${d.reply ? `
 </div>
 `;
 
-/* 返信 */
+/* 返信確実 */
 div.querySelector(".replyBtn").onclick=()=>{
 replyTarget=d.text;
 document.getElementById("msg").placeholder="返信: "+d.text.slice(0,20);
 };
 
+/* 表示 */
 document.getElementById("messages").appendChild(div);
 
 });
