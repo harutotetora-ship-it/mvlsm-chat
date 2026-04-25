@@ -51,7 +51,6 @@ overflow-y:auto;
 padding:10px;
 }
 
-/* 吹き出し */
 .message{
 display:flex;
 margin:10px 0;
@@ -89,7 +88,6 @@ padding-left:6px;
 margin-bottom:4px;
 }
 
-/* ボタン */
 button{cursor:pointer;}
 
 .replyBtn,.deleteBtn{
@@ -202,11 +200,12 @@ off,
 remove
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
 
+/* 🔥ここだけ自分のFirebaseに変更 */
 const app = initializeApp({
-apiKey:"xxx",
-authDomain:"xxx",
-databaseURL:"xxx",
-projectId:"xxx"
+apiKey: "https://smtyatto-default-rtdb.firebaseio.com",
+authDomain: "https://smtyatto-default-rtdb.firebaseio.com",
+databaseURL: "https://smtyatto-default-rtdb.firebaseio.com",
+projectId: "https://smtyatto-default-rtdb.firebaseio.com"
 });
 
 const db = getDatabase(app);
@@ -256,9 +255,7 @@ set(ref(db,"users/"+userId+"/icon"),url);
 window.switchRoom=function(room){
 currentRoom=room;
 document.getElementById("messages").innerHTML="";
-
 if(chatRef) off(chatRef);
-
 listenRoom();
 };
 
@@ -291,7 +288,7 @@ document.getElementById("msg").placeholder="メッセージ";
 
 document.getElementById("sendBtn").onclick=sendMsg;
 
-/* Enter（確実版） */
+/* Enter */
 document.addEventListener("keydown",(e)=>{
 if(e.key==="Enter" && document.activeElement.id==="msg"){
 sendMsg();
@@ -325,9 +322,8 @@ const icon=u?.icon||"https://via.placeholder.com/30";
 
 /* 時間 */
 const date=new Date(d.time||Date.now());
-
 const time=
-date.getFullYear()+"/"+
+`${date.getFullYear()}/`+
 String(date.getMonth()+1).padStart(2,"0")+"/"+
 String(date.getDate()).padStart(2,"0")+" "+
 String(date.getHours()).padStart(2,"0")+":"+
@@ -365,7 +361,7 @@ div.querySelector(".replyBtn").onclick=()=>{
 setReply(d.text);
 };
 
-/* 🗑 削除（確実版） */
+/* 削除（確実） */
 div.querySelector(".deleteBtn")?.addEventListener("click",()=>{
 remove(ref(db,"chat/"+currentRoom+"/"+key));
 });
