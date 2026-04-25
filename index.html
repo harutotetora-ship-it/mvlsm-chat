@@ -18,6 +18,7 @@ display:flex;
 height:100vh;
 }
 
+/* サイド */
 #sidebar{
 width:180px;
 background:#2b2d31;
@@ -40,6 +41,7 @@ cursor:pointer;
 background:#5865f2;
 }
 
+/* チャット */
 #chatArea{
 flex:1;
 display:flex;
@@ -117,6 +119,7 @@ background:#5865f2;
 color:white;
 }
 
+/* 返信 */
 .reply{
 font-size:11px;
 color:#aaa;
@@ -132,16 +135,20 @@ padding-left:0;
 padding-right:6px;
 }
 
-button.replyBtn{
+/* ボタン */
+button{
+cursor:pointer;
+}
+
+.replyBtn,.deleteBtn{
 font-size:10px;
 margin-top:4px;
 background:none;
 border:none;
 color:#aaa;
-cursor:pointer;
 }
 
-button.replyBtn:hover{
+.replyBtn:hover,.deleteBtn:hover{
 color:white;
 }
 
@@ -160,16 +167,16 @@ border-radius:5px;
 outline:none;
 }
 
-button.send{
+.send{
 margin-left:5px;
 padding:10px;
 border:none;
 border-radius:5px;
 background:#5865f2;
 color:white;
-cursor:pointer;
 }
 
+/* アイコン */
 #iconBox{
 display:flex;
 padding:5px;
@@ -183,6 +190,7 @@ border:none;
 border-radius:5px;
 }
 
+/* ログイン */
 #login{
 max-width:300px;
 margin:100px auto;
@@ -252,7 +260,8 @@ push,
 onValue,
 onChildAdded,
 onDisconnect,
-off
+off,
+remove
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
 
 const firebaseConfig = {
@@ -329,12 +338,15 @@ function sendMsg(){
 const msg = document.getElementById("msg").value;
 if(!msg) return;
 
-push(ref(db,"chat/"+currentRoom),{
+const newRef = push(ref(db,"chat/"+currentRoom));
+
+set(newRef,{
+id:newRef.key,
 userId,
 name:username,
 text:msg,
 time:Date.now(),
-reply: replyTarget
+reply:replyTarget
 });
 
 replyTarget = null;
@@ -344,10 +356,10 @@ document.getElementById("msg").value="";
 
 document.getElementById("sendBtn").onclick = sendMsg;
 
-/* Enter確実 */
-window.addEventListener("DOMContentLoaded", () => {
+/* Enter */
+window.addEventListener("DOMContentLoaded",()=>{
 document.getElementById("msg").addEventListener("keydown",(e)=>{
-if(e.key === "Enter"){
+if(e.key==="Enter"){
 e.preventDefault();
 sendMsg();
 }
@@ -382,7 +394,7 @@ const u = users?.[d.userId];
 
 const icon = u?.icon || "https://via.placeholder.com/30";
 
-/* ===== 確実時間表示 ===== */
+/* 時間（確実版） */
 const date = new Date(d.time || Date.now());
 
 const time =
@@ -391,7 +403,6 @@ String(date.getMonth()+1).padStart(2,"0") + "/" +
 String(date.getDate()).padStart(2,"0") + " " +
 String(date.getHours()).padStart(2,"0") + ":" +
 String(date.getMinutes()).padStart(2,"0");
-/* ======================= */
 
 const isMe = d.userId === userId;
 
@@ -412,14 +423,23 @@ ${d.reply ? `<div class="reply">↩ ${d.reply}</div>` : ""}
 
 <div class="bubble">${d.text}</div>
 
+<div>
 <button class="replyBtn">返信</button>
+${isMe ? `<button class="deleteBtn">削除</button>` : ""}
+</div>
 
 </div>
 `;
 
+/* 返信 */
 div.querySelector(".replyBtn").onclick = () => {
 setReply(d.text);
 };
+
+/* 削除 */
+div.querySelector(".deleteBtn")?.addEventListener("click",()=>{
+remove(ref(db,"chat/"+currentRoom+"/"+d.id));
+});
 
 document.getElementById("messages").appendChild(div);
 
