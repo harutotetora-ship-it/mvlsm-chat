@@ -22,7 +22,6 @@ height:100vh;
 width:180px;
 background:#2b2d31;
 padding:10px;
-box-sizing:border-box;
 }
 
 #sidebar button{
@@ -55,16 +54,9 @@ overflow-y:auto;
 padding:10px;
 }
 
-/* メッセージ */
 .message{
 display:flex;
 margin:10px 0;
-align-items:flex-start;
-}
-
-.message.me{
-flex-direction:row-reverse;
-text-align:right;
 }
 
 .avatar{
@@ -95,42 +87,19 @@ margin-left:5px;
 .bubble{
 background:#40444b;
 padding:10px;
-border-radius:15px;
-word-break:break-word;
+border-radius:12px;
 }
 
-.message.me .bubble{
-background:#5865f2;
-}
-
-/* 管理者虹色 */
 .admin b{
-background: linear-gradient(
-90deg,
-red, orange, yellow, green, cyan, blue, violet
-);
--webkit-background-clip: text;
-color: transparent;
-animation: rainbow 2s linear infinite;
+background: linear-gradient(90deg,red,orange,yellow,green,cyan,blue,violet);
+-webkit-background-clip:text;
+color:transparent;
+animation:rainbow 2s linear infinite;
 }
 
 @keyframes rainbow{
 0%{filter:hue-rotate(0deg);}
 100%{filter:hue-rotate(360deg);}
-}
-
-/* ボタン */
-.replyBtn,.deleteBtn{
-font-size:10px;
-margin-top:4px;
-background:none;
-border:none;
-color:#aaa;
-cursor:pointer;
-}
-
-.replyBtn:hover,.deleteBtn:hover{
-color:white;
 }
 
 /* 入力 */
@@ -192,8 +161,8 @@ border-radius:5px;
 
 <div id="sidebar">
 <button onclick="switchRoom('zatsudan')">⭐ 雑談</button>
-<button onclick="switchRoom('bug')">🐛 バグ報告</button>
-<button onclick="switchRoom('update')">📢 アップデート</button>
+<button onclick="switchRoom('bug')">🐛 バグ</button>
+<button onclick="switchRoom('update')">📢 更新</button>
 </div>
 
 <div id="chatArea">
@@ -241,7 +210,7 @@ const app = initializeApp(firebaseConfig);
 const db = getDatabase(app);
 
 /* =====================
-   状態
+   安全初期化
 ===================== */
 let userId = localStorage.getItem("uid");
 if(!userId){
@@ -251,26 +220,15 @@ localStorage.setItem("uid",userId);
 
 let username="名無し";
 let currentRoom="zatsudan";
-let chatRef;
 let isAdmin=false;
+let chatRef;
 
 /* =====================
-   管理者ボタン
+   DOM安全化（重要）
 ===================== */
-document.getElementById("adminBtn").onclick = () => {
-const pass = prompt("管理者パスワード");
+window.addEventListener("DOMContentLoaded", () => {
 
-if(pass === "admin123"){
-isAdmin = true;
-alert("管理者モードON");
-}else{
-alert("違います");
-}
-};
-
-/* =====================
-   ログイン
-===================== */
+/* 入室 */
 document.getElementById("loginBtn").onclick = () => {
 
 const pass = document.getElementById("pass").value;
@@ -284,23 +242,32 @@ return;
 document.getElementById("login").style.display="none";
 document.getElementById("layout").style.display="flex";
 
+/* ユーザー登録 */
 set(ref(db,"users/"+userId),{
 name:username,
 online:true
 });
 
-onDisconnect(ref(db,"users/"+userId)).set({
-online:false
-});
+onDisconnect(ref(db,"users/"+userId)).set({online:false});
 
 listenRoom();
+
 };
 
-/* =====================
-   送信
-===================== */
-document.getElementById("sendBtn").onclick = () => {
+/* 管理者 */
+document.getElementById("adminBtn").onclick = () => {
+const pass = prompt("管理者パスワード");
 
+if(pass==="admin123"){
+isAdmin=true;
+alert("管理者ON");
+}else{
+alert("違う");
+}
+};
+
+/* 送信 */
+document.getElementById("sendBtn").onclick = () => {
 const msg=document.getElementById("msg").value;
 if(!msg) return;
 
@@ -313,6 +280,8 @@ time:Date.now()
 
 document.getElementById("msg").value="";
 };
+
+});
 
 /* =====================
    ルーム
@@ -337,12 +306,7 @@ const d=snap.val();
 const key=snap.key;
 
 const date=new Date(d.time||Date.now());
-const time=
-date.getFullYear()+"/"+
-String(date.getMonth()+1).padStart(2,"0")+"/"+
-String(date.getDate()).padStart(2,"0")+" "+
-String(date.getHours()).padStart(2,"0")+":"+
-String(date.getMinutes()).padStart(2,"0");
+const time=date.getHours()+":"+String(date.getMinutes()).padStart(2,"0");
 
 const div=document.createElement("div");
 div.className="message";
@@ -352,9 +316,8 @@ div.innerHTML=`
 
 <div class="bubbleWrap">
 
-<div class="name ${isAdmin ? 'admin':''}">
+<div class="name ${isAdmin?'admin':''}">
 <b>${d.name}</b>
-<span style="font-size:10px;color:#888">#${d.userId.slice(0,5)}</span>
 <span class="time">${time}</span>
 </div>
 
@@ -365,7 +328,7 @@ div.innerHTML=`
 </div>
 `;
 
-/* 削除（全員） */
+/* 削除 */
 div.querySelector(".deleteBtn").onclick=()=>{
 remove(ref(db,"chat/"+currentRoom+"/"+key));
 };
