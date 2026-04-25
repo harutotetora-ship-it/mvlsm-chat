@@ -104,7 +104,6 @@ border:none;
 
 <body>
 
-<!-- ログイン -->
 <div id="login">
 <h2>MVLsmチャット</h2>
 <input id="name" placeholder="名前">
@@ -113,7 +112,6 @@ border:none;
 <p id="error"></p>
 </div>
 
-<!-- 本体 -->
 <div id="layout" style="display:none;">
 
 <div id="sidebar">
@@ -175,8 +173,9 @@ let username = "名無し";
 let currentRoom = "zatsudan";
 let users = {};
 
-/* 🔥 チャットリスナー管理 */
+/* 🔥 重複防止 */
 let chatRef = null;
+let sending = false;
 
 /* =====================
    200文字制限
@@ -229,14 +228,14 @@ online:false
 };
 
 /* =====================
-   部屋切替（ここが重要）
+   部屋切替
 ===================== */
 window.switchRoom = function(room){
 
 currentRoom = room;
 document.getElementById("messages").innerHTML="";
 
-/* 🔥 ここが修正ポイント */
+/* 🔥 完全解除 */
 if(chatRef){
 off(chatRef);
 chatRef = null;
@@ -255,18 +254,26 @@ set(ref(db,"users/"+userId+"/icon"), url);
 };
 
 /* =====================
-   送信
+   送信（重複防止）
 ===================== */
 function sendMsg(){
 
+if(sending) return;
+sending = true;
+
 const msg = document.getElementById("msg").value;
-if(!msg) return;
+if(!msg){
+sending = false;
+return;
+}
 
 push(ref(db,"chat/"+currentRoom),{
 userId,
 name:username,
 text:msg,
 time:Date.now()
+}).then(()=>{
+sending = false;
 });
 
 document.getElementById("msg").value="";
@@ -300,9 +307,13 @@ document.getElementById("online").innerText = online;
 });
 
 /* =====================
-   チャット受信（重複防止済み）
+   チャット受信（完全安定）
 ===================== */
 function listenRoom(){
+
+if(chatRef){
+off(chatRef);
+}
 
 chatRef = ref(db,"chat/"+currentRoom);
 
