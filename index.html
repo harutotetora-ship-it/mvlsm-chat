@@ -137,6 +137,7 @@ border-radius:5px;
 <input id="name" placeholder="名前">
 <input type="password" id="pass" placeholder="パスワード">
 <button id="loginBtn">入室</button>
+<button onclick="setIcon()">アイコン設定</button>
 <button id="adminBtn">管理者確認</button>
 <p id="error"></p>
 </div>
@@ -217,9 +218,11 @@ return;
 document.getElementById("login").style.display="none";
 document.getElementById("layout").style.display="flex";
 
+/* ★アイコンも保存 */
 set(ref(db,`${ROOT}/users/${userId}`),{
 name:username,
-online:true
+online:true,
+icon: localStorage.getItem("icon") || "https://via.placeholder.com/30"
 });
 
 onDisconnect(ref(db,`${ROOT}/users/${userId}`)).set({online:false});
@@ -249,6 +252,20 @@ sendMessage();
 
 });
 
+/* ================= アイコン設定 ================= */
+window.setIcon=function(){
+const url=prompt("アイコンURL");
+if(!url) return;
+
+localStorage.setItem("icon",url);
+
+set(ref(db,`${ROOT}/users/${userId}`),{
+name:username,
+online:true,
+icon:url
+});
+};
+
 /* ================= 送信 ================= */
 function sendMessage(){
 
@@ -266,7 +283,6 @@ reply:replyTarget || null
 
 replyTarget=null;
 input.value="";
-document.getElementById("msg").placeholder="メッセージ";
 }
 
 /* ================= ルーム ================= */
@@ -290,10 +306,12 @@ if(!d) return;
 const date=new Date(d.time||Date.now());
 const time=date.getHours()+":"+String(date.getMinutes()).padStart(2,"0");
 
+/* ★アイコン完全修正 */
+const icon = d.icon || "https://via.placeholder.com/30";
+
 const div=document.createElement("div");
 div.className="message";
 
-/* ★ここが返信レイアウト完成版 */
 div.innerHTML=`
 <div>
 
@@ -311,7 +329,7 @@ opacity:0.9;
 ` : ""}
 
 <div style="display:flex;align-items:center;gap:6px;">
-<img class="avatar" src="https://via.placeholder.com/30">
+<img class="avatar" src="${icon}">
 
 <div class="${d.isAdmin ? "admin" : ""}">
 <b>${d.name}</b>
@@ -330,7 +348,7 @@ ${d.text}
 </div>
 `;
 
-/* 返信動作 */
+/* 返信 */
 div.querySelector(".replyBtn").onclick=()=>{
 replyTarget=d.text;
 document.getElementById("msg").placeholder="返信: "+d.text.slice(0,20);
