@@ -18,7 +18,6 @@ display:flex;
 height:100vh;
 }
 
-/* サイドバー */
 #sidebar{
 width:180px;
 background:#2b2d31;
@@ -41,7 +40,6 @@ cursor:pointer;
 background:#5865f2;
 }
 
-/* チャット */
 #chatArea{
 flex:1;
 display:flex;
@@ -66,10 +64,6 @@ padding:10px;
 display:flex;
 margin:10px 0;
 align-items:flex-start;
-}
-
-.message.me{
-flex-direction:row-reverse;
 }
 
 .avatar{
@@ -100,7 +94,7 @@ font-size:11px;
 color:#aaa;
 border-left:2px solid #5865f2;
 padding-left:6px;
-margin-bottom:5px;
+margin-bottom:4px;
 }
 
 .bubble{
@@ -110,12 +104,7 @@ border-radius:15px;
 word-break:break-word;
 }
 
-.me .bubble{
-background:#5865f2;
-}
-
-/* 返信ボタン */
-.replyBtn{
+button.replyBtn{
 font-size:10px;
 margin-top:4px;
 background:none;
@@ -124,7 +113,7 @@ color:#aaa;
 cursor:pointer;
 }
 
-.replyBtn:hover{
+button.replyBtn:hover{
 color:white;
 }
 
@@ -143,7 +132,7 @@ border-radius:5px;
 outline:none;
 }
 
-button{
+button.send{
 margin-left:5px;
 padding:10px;
 border:none;
@@ -166,12 +155,29 @@ padding:8px;
 border:none;
 border-radius:5px;
 }
+
+/* ログイン */
+#login{
+max-width:300px;
+margin:100px auto;
+background:#2b2d31;
+padding:20px;
+border-radius:10px;
+text-align:center;
+}
+
+input{
+width:90%;
+padding:10px;
+margin:5px;
+border-radius:5px;
+border:none;
+}
 </style>
 </head>
 
 <body>
 
-<!-- ログイン -->
 <div id="login">
 <h2>MVLsmチャット</h2>
 <input id="name" placeholder="名前">
@@ -180,7 +186,6 @@ border-radius:5px;
 <p id="error"></p>
 </div>
 
-<!-- 本体 -->
 <div id="layout" style="display:none;">
 
 <div id="sidebar">
@@ -197,16 +202,14 @@ border-radius:5px;
 
 <div id="messages"></div>
 
-<!-- アイコン -->
 <div id="iconBox">
 <input id="iconUrl" placeholder="アイコンURL">
-<button id="iconBtn">設定</button>
+<button id="iconBtn">アイコン設定</button>
 </div>
 
-<!-- 入力 -->
 <div id="inputArea">
 <input id="msg" placeholder="メッセージ">
-<button id="sendBtn">送信</button>
+<button class="send" id="sendBtn">送信</button>
 </div>
 
 </div>
@@ -288,7 +291,7 @@ if(chatRef) off(chatRef);
 listenRoom();
 };
 
-/* 返信選択 */
+/* 返信 */
 function setReply(text){
 replyTarget = text;
 document.getElementById("msg").placeholder = "返信: " + text.slice(0,20);
@@ -314,6 +317,14 @@ document.getElementById("msg").value="";
 }
 
 document.getElementById("sendBtn").onclick = sendMsg;
+
+/* Enter送信（確実版） */
+document.getElementById("msg").addEventListener("keydown",(e)=>{
+if(e.key === "Enter"){
+e.preventDefault();
+sendMsg();
+}
+});
 
 /* オンライン */
 onValue(ref(db,"users"),(snap)=>{
@@ -344,18 +355,16 @@ const u = users?.[d.userId];
 const icon = u?.icon || "https://via.placeholder.com/30";
 
 const date = new Date(d.time || Date.now());
-
 const time =
 String(date.getHours()).padStart(2,"0") + ":" +
 String(date.getMinutes()).padStart(2,"0");
 
-const isMe = d.userId === userId;
-
 const div = document.createElement("div");
-div.className = "message" + (isMe ? " me" : "");
+div.className = "message";
 
 div.innerHTML = `
 <img class="avatar" src="${icon}">
+
 <div class="bubbleWrap">
 
 <div class="name">
