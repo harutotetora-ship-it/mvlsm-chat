@@ -55,8 +55,8 @@ padding:10px;
 }
 
 .message{
-display:flex;
 margin:10px 0;
+display:flex;
 }
 
 .avatar{
@@ -87,9 +87,11 @@ margin-left:5px;
 .bubble{
 background:#40444b;
 padding:10px;
-border-radius:12px;
+border-radius:10px;
+word-break:break-word;
 }
 
+/* 管理者 */
 .admin b{
 background: linear-gradient(90deg,red,orange,yellow,green,cyan,blue,violet);
 -webkit-background-clip:text;
@@ -117,11 +119,15 @@ border-radius:5px;
 outline:none;
 }
 
-button.send{
-margin-left:5px;
+button{
 padding:10px;
+margin-left:5px;
 border:none;
 border-radius:5px;
+cursor:pointer;
+}
+
+#sendBtn{
 background:#5865f2;
 color:white;
 }
@@ -175,7 +181,7 @@ border-radius:5px;
 
 <div id="inputArea">
 <input id="msg" placeholder="メッセージ">
-<button class="send" id="sendBtn">送信</button>
+<button id="sendBtn">送信</button>
 </div>
 
 </div>
@@ -210,7 +216,7 @@ const app = initializeApp(firebaseConfig);
 const db = getDatabase(app);
 
 /* =====================
-   安全初期化
+   状態
 ===================== */
 let userId = localStorage.getItem("uid");
 if(!userId){
@@ -224,7 +230,7 @@ let isAdmin=false;
 let chatRef;
 
 /* =====================
-   DOM安全化（重要）
+   DOM安全（超重要）
 ===================== */
 window.addEventListener("DOMContentLoaded", () => {
 
@@ -242,7 +248,6 @@ return;
 document.getElementById("login").style.display="none";
 document.getElementById("layout").style.display="flex";
 
-/* ユーザー登録 */
 set(ref(db,"users/"+userId),{
 name:username,
 online:true
@@ -267,8 +272,26 @@ alert("違う");
 };
 
 /* 送信 */
-document.getElementById("sendBtn").onclick = () => {
-const msg=document.getElementById("msg").value;
+document.getElementById("sendBtn").onclick = sendMessage;
+
+/* Enter確実 */
+document.getElementById("msg").addEventListener("keydown",(e)=>{
+if(e.key==="Enter"){
+e.preventDefault();
+sendMessage();
+}
+});
+
+});
+
+/* =====================
+   送信関数（統一）
+===================== */
+function sendMessage(){
+
+const input=document.getElementById("msg");
+const msg=input.value;
+
 if(!msg) return;
 
 push(ref(db,"chat/"+currentRoom),{
@@ -278,10 +301,8 @@ text:msg,
 time:Date.now()
 });
 
-document.getElementById("msg").value="";
-};
-
-});
+input.value="";
+}
 
 /* =====================
    ルーム
@@ -294,7 +315,7 @@ listenRoom();
 };
 
 /* =====================
-   チャット
+   チャット表示
 ===================== */
 function listenRoom(){
 
@@ -306,7 +327,8 @@ const d=snap.val();
 const key=snap.key;
 
 const date=new Date(d.time||Date.now());
-const time=date.getHours()+":"+String(date.getMinutes()).padStart(2,"0");
+const time=
+date.getHours()+":"+String(date.getMinutes()).padStart(2,"0");
 
 const div=document.createElement("div");
 div.className="message";
