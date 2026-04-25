@@ -130,13 +130,11 @@ border:none;
 
 <div id="messages"></div>
 
-<!-- アイコン -->
 <div style="padding:5px; background:#2b2d31;">
 <input id="iconUrl" placeholder="アイコンURL">
 <button id="iconBtn">アイコン設定</button>
 </div>
 
-<!-- 入力 -->
 <div id="inputArea">
 <input id="msg" placeholder="メッセージ">
 <button id="sendBtn">送信</button>
@@ -155,6 +153,7 @@ set,
 push,
 onValue,
 onChildAdded,
+off,
 onDisconnect
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
 
@@ -175,21 +174,21 @@ const userId = crypto.randomUUID();
 let username = "名無し";
 let currentRoom = "zatsudan";
 let users = {};
-let chatStarted = false;
+
+/* 🔥 チャットリスナー管理 */
+let chatRef = null;
 
 /* =====================
-   🔥 200文字制限（確実版）
+   200文字制限
 ===================== */
 function limitText(text, max = 200){
 text = String(text || "");
-
 if(text.length > max){
 return text.slice(0, max) + " (以下略)";
 }
 return text;
 }
 
-/* HTML安全化＋制限 */
 function safe(text){
 return limitText(
 String(text)
@@ -230,12 +229,19 @@ online:false
 };
 
 /* =====================
-   部屋切替
+   部屋切替（ここが重要）
 ===================== */
 window.switchRoom = function(room){
+
 currentRoom = room;
 document.getElementById("messages").innerHTML="";
-chatStarted = false;
+
+/* 🔥 ここが修正ポイント */
+if(chatRef){
+off(chatRef);
+chatRef = null;
+}
+
 listenRoom();
 };
 
@@ -283,7 +289,6 @@ onValue(ref(db,"users"),(snap)=>{
 users = snap.val() || {};
 
 let online="";
-
 Object.keys(users).forEach(id=>{
 if(users[id]?.online){
 online += (users[id].name || "名無し") + " ";
@@ -295,14 +300,13 @@ document.getElementById("online").innerText = online;
 });
 
 /* =====================
-   チャット受信
+   チャット受信（重複防止済み）
 ===================== */
 function listenRoom(){
 
-if(chatStarted) return;
-chatStarted = true;
+chatRef = ref(db,"chat/"+currentRoom);
 
-onChildAdded(ref(db,"chat/"+currentRoom),(snap)=>{
+onChildAdded(chatRef,(snap)=>{
 
 const d = snap.val();
 const u = users?.[d.userId];
