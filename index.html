@@ -3,18 +3,10 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
 <title>MVLsmチャット</title>
 
 <style>
-
-/* =====================
-   全体
-===================== */
-
-*{
-  box-sizing:border-box;
-}
+*{box-sizing:border-box}
 
 body{
   margin:0;
@@ -26,90 +18,51 @@ body{
 button{
   border:none;
   border-radius:6px;
+  padding:10px;
   cursor:pointer;
   color:white;
 }
 
-/* =====================
-   ログイン
-===================== */
-
+/* ログイン */
 #login{
   width:min(90%,400px);
   margin:80px auto;
-  padding:30px;
+  padding:25px;
   background:#2b2d31;
-  border-radius:15px;
+  border-radius:12px;
   text-align:center;
 }
 
-#login h1{
-  margin-top:0;
-}
-
-.loginInput{
+#login input{
   width:100%;
   padding:12px;
-  margin:8px 0;
+  margin:6px 0;
   border:none;
-  border-radius:7px;
-  font-size:16px;
+  border-radius:6px;
 }
 
-#login button{
-  padding:12px 18px;
-  margin:8px 3px;
-  background:#5865f2;
-  font-size:16px;
-}
+#loginBtn{background:#5865f2}
+#adminBtn{background:#555}
+#error{color:#ff9999}
 
-#error{
-  color:#ff9b9b;
-  word-break:break-word;
-}
-
-/* =====================
-   レイアウト
-===================== */
-
+/* メイン */
 #layout{
   display:flex;
   height:100vh;
 }
 
-/* =====================
-   サイドバー
-===================== */
-
 #sidebar{
-  width:190px;
+  width:180px;
   padding:10px;
   background:#2b2d31;
   flex-shrink:0;
 }
 
-#sidebar h2{
-  font-size:18px;
-  margin:10px;
-}
-
-.roomBtn,
-.settingBtn{
+#sidebar button{
   width:100%;
   margin:5px 0;
-  padding:10px;
   background:#40444b;
-  text-align:left;
 }
-
-.roomBtn:hover,
-.settingBtn:hover{
-  background:#5865f2;
-}
-
-/* =====================
-   チャット
-===================== */
 
 #chatArea{
   flex:1;
@@ -122,7 +75,6 @@ button{
 #topBar{
   padding:12px;
   background:#2b2d31;
-  border-bottom:1px solid #1e1f22;
 }
 
 #roomName{
@@ -131,24 +83,16 @@ button{
 }
 
 #online{
-  margin-top:5px;
-  font-size:12px;
-  color:#aaa;
+  font-size:13px;
+  color:#bbb;
 }
 
-/* =====================
-   メッセージ一覧
-===================== */
-
+/* メッセージ */
 #messages{
   flex:1;
   overflow-y:auto;
-  padding:15px;
+  padding:12px;
 }
-
-/* =====================
-   メッセージ
-===================== */
 
 .message{
   display:flex;
@@ -182,32 +126,21 @@ button{
 .time{
   font-size:11px;
   color:#888;
-  margin-left:7px;
+  margin-left:6px;
 }
 
 .bubble{
-  padding:10px 13px;
   background:#40444b;
+  padding:10px 12px;
   border-radius:10px;
   white-space:pre-wrap;
   word-break:break-word;
 }
 
-/* =====================
-   管理者虹色
-===================== */
-
+/* 管理者虹色 */
 .adminName{
   background:linear-gradient(
-    90deg,
-    red,
-    orange,
-    yellow,
-    lime,
-    cyan,
-    #668cff,
-    violet,
-    red
+    90deg,red,orange,yellow,lime,cyan,blue,violet,red
   );
   background-size:400% 100%;
   -webkit-background-clip:text;
@@ -217,87 +150,60 @@ button{
 }
 
 @keyframes rainbow{
-  0%{
-    background-position:0% 50%;
-  }
-
-  100%{
-    background-position:400% 50%;
-  }
+  from{background-position:0%}
+  to{background-position:400%}
 }
 
-/* =====================
-   返信表示
-===================== */
-
+/* 返信先表示 */
 .replyPreview{
   display:flex;
   align-items:center;
   gap:7px;
   padding:7px;
   margin-bottom:5px;
-  background:#35373c;
+  background:#292b2f;
   border-left:3px solid #5865f2;
   border-radius:6px;
-  cursor:pointer;
 }
 
 .replyPreview img{
-  width:24px;
-  height:24px;
+  width:28px;
+  height:28px;
   border-radius:50%;
   object-fit:cover;
-  background:#555;
-  flex-shrink:0;
 }
 
-.replyPreviewInfo{
+.replyInfo{
   min-width:0;
 }
 
-.replyPreviewName{
+.replyName{
   font-size:12px;
-  color:#ccc;
+  color:#ddd;
 }
 
-.replyPreviewText{
+.replyText{
   font-size:12px;
   color:#999;
   white-space:nowrap;
   overflow:hidden;
   text-overflow:ellipsis;
-  max-width:300px;
-}
-
-/* =====================
-   メッセージ操作
-===================== */
-
-.messageActions{
-  margin-top:4px;
 }
 
 .replyBtn{
-  padding:4px 8px;
+  margin-top:5px;
+  padding:5px 9px;
   background:#555;
   font-size:12px;
 }
 
-.replyBtn:hover{
-  background:#5865f2;
-}
-
-/* =====================
-   返信入力中
-===================== */
-
+/* 返信中 */
 #replyBar{
   display:none;
-  align-items:center;
-  gap:8px;
   padding:8px 12px;
   background:#25262a;
-  border-top:1px solid #1e1f22;
+  gap:8px;
+  align-items:center;
 }
 
 #replyingText{
@@ -306,7 +212,6 @@ button{
   white-space:nowrap;
   text-overflow:ellipsis;
   color:#bbb;
-  font-size:13px;
 }
 
 #cancelReplyBtn{
@@ -314,10 +219,7 @@ button{
   padding:6px 10px;
 }
 
-/* =====================
-   入力欄
-===================== */
-
+/* 入力 */
 #inputArea{
   display:flex;
   padding:10px;
@@ -329,27 +231,22 @@ button{
   min-width:0;
   padding:12px;
   border:none;
-  border-radius:7px;
+  border-radius:6px;
   outline:none;
-  font-size:15px;
 }
 
 #sendBtn{
   margin-left:7px;
-  padding:10px 16px;
   background:#5865f2;
 }
 
-/* =====================
-   アイコン設定
-===================== */
-
+/* アイコン設定 */
 #iconPanel{
   display:none;
   position:fixed;
   inset:0;
+  z-index:100;
   background:rgba(0,0,0,.6);
-  z-index:10;
   justify-content:center;
   align-items:center;
 }
@@ -361,10 +258,6 @@ button{
   border-radius:12px;
 }
 
-#iconBox h2{
-  margin-top:0;
-}
-
 #iconUrl{
   width:100%;
   padding:10px;
@@ -372,83 +265,36 @@ button{
   border-radius:6px;
 }
 
-.iconButtons{
-  margin-top:12px;
-  text-align:right;
-}
+#saveIconBtn{background:#5865f2}
+#closeIconBtn{background:#555}
 
-.iconButtons button{
-  padding:9px 13px;
-  margin-left:5px;
-}
-
-#saveIconBtn{
-  background:#5865f2;
-}
-
-#closeIconBtn{
-  background:#555;
-}
-
-/* =====================
-   スマホ
-===================== */
-
+/* スマホ */
 @media(max-width:600px){
-
   #sidebar{
-    width:80px;
+    width:85px;
     padding:5px;
   }
 
-  #sidebar h2{
-    display:none;
-  }
-
-  .roomBtn,
-  .settingBtn{
+  #sidebar button{
     font-size:11px;
-    text-align:center;
     padding:8px 3px;
   }
 
   .bubbleWrap{
     max-width:calc(100% - 50px);
   }
-
-  #messages{
-    padding:8px;
-  }
-
 }
-
 </style>
 </head>
 
 <body>
 
-<!-- =====================
-     ログイン
-===================== -->
-
+<!-- ログイン -->
 <div id="login">
+  <h2>MVLsmチャット</h2>
 
-  <h1>MVLsmチャット</h1>
-
-  <input
-    id="name"
-    class="loginInput"
-    type="text"
-    placeholder="名前"
-    maxlength="30"
-  >
-
-  <input
-    id="pass"
-    class="loginInput"
-    type="password"
-    placeholder="チャットパスワード"
-  >
+  <input id="name" placeholder="名前" maxlength="30">
+  <input id="pass" type="password" placeholder="チャットパスワード">
 
   <br>
 
@@ -456,141 +302,60 @@ button{
   <button id="adminBtn">管理者確認</button>
 
   <p id="error"></p>
-
 </div>
 
-
-<!-- =====================
-     メイン
-===================== -->
-
+<!-- メイン画面 -->
 <div id="layout" style="display:none;">
 
-  <!-- サイドバー -->
-
   <div id="sidebar">
+    <button onclick="switchRoom('zatsudan')">⭐ 雑談</button>
+    <button onclick="switchRoom('bug')">🐛 バグ</button>
+    <button onclick="switchRoom('update')">📢 更新</button>
 
-    <h2>MVLsmチャット</h2>
+    <hr>
 
-    <button class="roomBtn" onclick="switchRoom('zatsudan')">
-      ⭐ 雑談
-    </button>
-
-    <button class="roomBtn" onclick="switchRoom('bug')">
-      🐛 バグ
-    </button>
-
-    <button class="roomBtn" onclick="switchRoom('update')">
-      📢 更新
-    </button>
-
-    <hr style="border-color:#444;">
-
-    <button
-      class="settingBtn"
-      id="iconSettingBtn"
-    >
-      🖼️ アイコン設定
-    </button>
-
+    <button id="iconSettingBtn">🖼️ アイコン設定</button>
   </div>
-
-
-  <!-- チャット -->
 
   <div id="chatArea">
 
     <div id="topBar">
-
-      <div id="roomName">
-        ⭐ 雑談
-      </div>
-
-      <div>
-        🟢 オンライン:
-        <span id="online">読み込み中...</span>
-      </div>
-
+      <div id="roomName">⭐ 雑談</div>
+      🟢 オンライン: <span id="online">読み込み中...</span>
     </div>
-
 
     <div id="messages"></div>
 
-
     <!-- 返信中 -->
-
     <div id="replyBar">
-
-      <div id="replyingText">
-        返信中
-      </div>
-
-      <button id="cancelReplyBtn">
-        ×
-      </button>
-
+      <span id="replyingText"></span>
+      <button id="cancelReplyBtn">×</button>
     </div>
-
 
     <!-- 入力 -->
-
     <div id="inputArea">
-
-      <input
-        id="msg"
-        placeholder="メッセージ"
-        maxlength="2000"
-      >
-
-      <button id="sendBtn">
-        送信
-      </button>
-
+      <input id="msg" placeholder="メッセージ">
+      <button id="sendBtn">送信</button>
     </div>
 
   </div>
-
 </div>
 
-
-<!-- =====================
-     アイコン設定画面
-===================== -->
-
+<!-- アイコン設定 -->
 <div id="iconPanel">
-
   <div id="iconBox">
-
     <h2>アイコン設定</h2>
 
-    <input
-      id="iconUrl"
-      type="text"
-      placeholder="画像URLを入力"
-    >
+    <input id="iconUrl" placeholder="画像のURLを入力">
 
-    <div class="iconButtons">
+    <br><br>
 
-      <button id="closeIconBtn">
-        閉じる
-      </button>
-
-      <button id="saveIconBtn">
-        保存
-      </button>
-
-    </div>
-
+    <button id="closeIconBtn">閉じる</button>
+    <button id="saveIconBtn">保存</button>
   </div>
-
 </div>
 
-
 <script type="module">
-
-/* =====================
-   Firebase
-===================== */
 
 import { initializeApp }
 from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
@@ -605,6 +370,7 @@ import {
   getDatabase,
   ref,
   set,
+  update,
   push,
   onValue,
   onChildAdded,
@@ -613,1122 +379,479 @@ import {
 }
 from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
 
-
-/* =====================
-   Firebase設定
-===================== */
-
+/* Firebase設定
+   ★ Firebase ConsoleのConfigからコピーしたもの */
 const firebaseConfig = {
-
   apiKey: "AIzaSyARMFFYzOfZlptX72yn17AqCrXq3vyKK1s",
-
   authDomain: "smtyatto.firebaseapp.com",
-
-  databaseURL:
-  "https://smtyatto-default-rtdb.firebaseio.com",
-
+  databaseURL: "https://smtyatto-default-rtdb.firebaseio.com",
   projectId: "smtyatto",
-
-  storageBucket:
-  "smtyatto.firebasestorage.app",
-
-  messagingSenderId:
-  "720432898013",
-
-  appId:
-  "1:720432898013:web:3fc9bb90082235ab506034",
-
-  measurementId:
-  "G-2NJNZJ46K0"
-
+  storageBucket: "smtyatto.firebasestorage.app",
+  messagingSenderId: "720432898013",
+  appId: "1:720432898013:web:3fc9bb90082235ab506034",
+  measurementId: "G-2NJNZJ46K0"
 };
-
-
-/* =====================
-   Firebase開始
-===================== */
 
 const app = initializeApp(firebaseConfig);
-
 const auth = getAuth(app);
-
 const db = getDatabase(app);
 
-
-/* =====================
-   統一設定
-===================== */
-
+/* 設定 */
 const ROOT = "smchat";
-
-/*
-  チャット入室パスワード
-*/
 const CHAT_PASSWORD = "MvLO";
 
-/*
-  管理者パスワード
-
-  注意：
-  これは「管理者表示をONにするための
-  フロント側の確認」です。
-
-  本当に管理者だけ書き込みを許可する等の
-  権限管理はFirebase Rulesで行う。
-*/
+/* 管理者パスワード */
 const ADMIN_PASSWORD = "admin123";
 
-
-/* =====================
-   変数
-===================== */
-
+/* 変数 */
 let userId = "";
-
 let username = "名無し";
-
 let currentRoom = "zatsudan";
-
 let isAdmin = false;
-
 let chatRef = null;
-
-let myIcon =
-  localStorage.getItem("mvlsm_icon")
-  ||
-  "https://via.placeholder.com/40";
-
 let replyData = null;
 
+let myIcon = localStorage.getItem("mvlsm_icon") ||
+"https://via.placeholder.com/40";
 
-/* =====================
-   HTML安全表示
-===================== */
-
-function escapeHTML(text){
-
-  const div = document.createElement("div");
-
-  div.textContent =
-    String(text ?? "");
-
-  return div.innerHTML;
-
-}
-
-
-/* =====================
-   時間
-===================== */
-
-function formatTime(timestamp){
-
-  const date =
-    new Date(timestamp || Date.now());
-
-  return (
-    date.getHours()
-    +
-    ":"
-    +
-    String(
-      date.getMinutes()
-    ).padStart(2,"0")
-  );
-
-}
-
-
-/* =====================
-   ルーム名
-===================== */
-
+/* ルーム名 */
 const roomNames = {
-
   zatsudan:"⭐ 雑談",
-
   bug:"🐛 バグ",
-
   update:"📢 更新"
-
 };
 
+/* 時間 */
+function formatTime(timestamp){
+  const date = new Date(timestamp || Date.now());
 
-/* =====================
-   Firebase匿名ログイン
-===================== */
-
-async function firebaseLogin(){
-
-  const result =
-    await signInAnonymously(auth);
-
-  userId = result.user.uid;
-
-  console.log(
-    "Firebase認証成功:",
-    userId
-  );
-
+  return date.getHours() + ":" +
+    String(date.getMinutes()).padStart(2,"0");
 }
 
+/* Firebase認証 */
+async function firebaseLogin(){
+  const result = await signInAnonymously(auth);
+  userId = result.user.uid;
+}
 
-/* =====================
-   入室
-===================== */
-
+/* 入室 */
 async function login(){
 
-  const error =
-    document.getElementById("error");
-
+  const error = document.getElementById("error");
   error.textContent = "";
 
-  const pass =
-    document.getElementById("pass").value;
+  const pass = document.getElementById("pass").value;
 
   username =
-    document.getElementById("name").value.trim()
-    ||
+    document.getElementById("name").value.trim() ||
     "名無し";
 
-
   if(pass !== CHAT_PASSWORD){
-
-    error.textContent =
-      "チャットパスワードが違います";
-
+    error.textContent = "チャットパスワードが違います";
     return;
-
   }
-
 
   try{
 
-    error.textContent =
-      "Firebaseに接続中...";
-
+    error.textContent = "Firebaseに接続中...";
 
     await firebaseLogin();
 
-
-    document.getElementById("login")
-      .style.display = "none";
-
-    document.getElementById("layout")
-      .style.display = "flex";
-
-
-    const userRef =
-      ref(
-        db,
-        `${ROOT}/users/${userId}`
-      );
-
+    const userRef = ref(db,`${ROOT}/users/${userId}`);
 
     await set(userRef,{
-
       name:username,
-
       online:true,
-
       icon:myIcon,
-
       isAdmin:isAdmin
-
     });
-
 
     onDisconnect(userRef).set({
-
       name:username,
-
       online:false,
-
       icon:myIcon,
-
       isAdmin:isAdmin
-
     });
 
+    document.getElementById("login").style.display = "none";
+    document.getElementById("layout").style.display = "flex";
 
     listenRoom();
-
     listenOnline();
-
 
   }catch(e){
 
     console.error(e);
 
     error.textContent =
-      "Firebase認証エラー: "
-      +
-      e.message;
-
+      "Firebaseエラー: " + e.message;
   }
-
 }
 
-
-/* =====================
-   管理者確認
-===================== */
-
+/* 管理者確認 */
 function adminCheck(){
 
-  const pass =
-    prompt("管理者パスワード");
-
-  if(pass === null){
-    return;
-  }
-
+  const pass = prompt("管理者パスワード");
 
   if(pass === ADMIN_PASSWORD){
-
     isAdmin = true;
-
-    alert(
-      "管理者モードON！\n名前が虹色になります。"
-    );
-
-  }else{
-
-    alert(
-      "管理者パスワードが違います"
-    );
-
+    alert("管理者モードON！");
+  }else if(pass !== null){
+    alert("管理者パスワードが違います");
   }
-
 }
 
-
-/* =====================
-   送信
-===================== */
-
+/* 送信 */
 async function sendMessage(){
 
-  const input =
-    document.getElementById("msg");
+  const input = document.getElementById("msg");
+  const text = input.value.trim();
 
-  const text =
-    input.value.trim();
-
-
-  if(!text){
-    return;
-  }
-
+  if(!text) return;
 
   if(!userId){
-
-    alert(
-      "Firebase認証が完了していません"
-    );
-
+    alert("まだログインしていません");
     return;
-
   }
 
+  const data = {
+    userId:userId,
+    name:username,
+    text:text,
+    icon:myIcon,
+    time:Date.now(),
+    isAdmin:isAdmin
+  };
+
+  /* 返信情報 */
+  if(replyData){
+    data.reply = {
+      messageKey:replyData.messageKey,
+      name:replyData.name,
+      text:replyData.text,
+      icon:replyData.icon
+    };
+  }
 
   try{
 
-    const messageData = {
-
-      userId:userId,
-
-      name:username,
-
-      text:text,
-
-      icon:myIcon,
-
-      time:Date.now(),
-
-      isAdmin:isAdmin
-
-    };
-
-
-    /* 返信がある場合 */
-
-    if(replyData){
-
-      messageData.reply = {
-
-        messageKey:
-          replyData.messageKey,
-
-        name:
-          replyData.name,
-
-        text:
-          replyData.text,
-
-        icon:
-          replyData.icon
-
-      };
-
-    }
-
-
     await push(
-      ref(
-        db,
-        `${ROOT}/chat/${currentRoom}`
-      ),
-      messageData
+      ref(db,`${ROOT}/chat/${currentRoom}`),
+      data
     );
 
-
     input.value = "";
-
     cancelReply();
-
 
   }catch(e){
 
     console.error(e);
-
-    alert(
-      "送信できませんでした: "
-      +
-      e.message
-    );
+    alert("送信できませんでした: " + e.message);
 
   }
-
 }
 
-
-/* =====================
-   ルーム変更
-===================== */
-
-window.switchRoom =
-function(room){
-
-  if(!userId){
-    return;
-  }
-
+/* ルーム変更 */
+window.switchRoom = function(room){
 
   currentRoom = room;
 
+  document.getElementById("roomName").textContent =
+    roomNames[room] || room;
 
-  document.getElementById("roomName")
-    .textContent =
-    roomNames[room]
-    ||
-    room;
-
-
-  document.getElementById("messages")
-    .innerHTML = "";
-
+  document.getElementById("messages").innerHTML = "";
 
   if(chatRef){
-
     off(chatRef);
-
   }
-
 
   cancelReply();
-
   listenRoom();
-
 };
 
-
-/* =====================
-   チャット受信
-===================== */
-
+/* 受信開始 */
 function listenRoom(){
 
-  chatRef =
-    ref(
-      db,
-      `${ROOT}/chat/${currentRoom}`
-    );
-
-
-  onChildAdded(
-    chatRef,
-    (snap)=>{
-
-      const d =
-        snap.val()
-        ||
-        {};
-
-      const key =
-        snap.key;
-
-
-      addMessageToScreen(
-        d,
-        key
-      );
-
-    }
+  chatRef = ref(
+    db,
+    `${ROOT}/chat/${currentRoom}`
   );
 
+  onChildAdded(chatRef,(snap)=>{
+
+    const data = snap.val();
+
+    if(data){
+      addMessage(data,snap.key);
+    }
+
+  });
 }
 
+/* メッセージ表示 */
+function addMessage(d,key){
 
-/* =====================
-   画面にメッセージ追加
-===================== */
+  const messages = document.getElementById("messages");
 
-function addMessageToScreen(
-  d,
-  key
-){
+  const div = document.createElement("div");
+  div.className = "message";
+  div.id = "message-" + key;
 
-  const messages =
-    document.getElementById("messages");
+  /* アイコン */
+  const avatar = document.createElement("img");
+  avatar.className = "avatar";
+  avatar.src = d.icon || "https://via.placeholder.com/40";
+  avatar.onerror = function(){
+    this.src = "https://via.placeholder.com/40";
+  };
 
+  /* 本体 */
+  const wrap = document.createElement("div");
+  wrap.className = "bubbleWrap";
 
-  const div =
-    document.createElement("div");
+  /* 名前 */
+  const nameLine = document.createElement("div");
+  nameLine.className = "nameLine";
 
-  div.className =
-    "message";
-
-  div.id =
-    "message-" + key;
-
-
-  /* ---------------------
-     アイコン
-  --------------------- */
-
-  const avatar =
-    document.createElement("img");
-
-  avatar.className =
-    "avatar";
-
-  avatar.src =
-    d.icon
-    ||
-    "https://via.placeholder.com/40";
-
-  avatar.alt =
-    "アイコン";
-
-
-  avatar.onerror =
-    ()=>{
-      avatar.src =
-        "https://via.placeholder.com/40";
-    };
-
-
-  /* ---------------------
-     右側
-  --------------------- */
-
-  const wrap =
-    document.createElement("div");
-
-  wrap.className =
-    "bubbleWrap";
-
-
-  /* ---------------------
-     名前
-  --------------------- */
-
-  const nameLine =
-    document.createElement("div");
-
-  nameLine.className =
-    "nameLine";
-
-
-  const name =
-    document.createElement("span");
-
-  name.className =
-    "name";
-
+  const name = document.createElement("span");
+  name.className = "name";
 
   if(d.isAdmin){
-
-    name.classList.add(
-      "adminName"
-    );
-
+    name.classList.add("adminName");
   }
 
+  name.textContent = d.name || "名無し";
 
-  name.textContent =
-    d.name
-    ||
-    "名無し";
-
-
-  const time =
-    document.createElement("span");
-
-  time.className =
-    "time";
-
-  time.textContent =
-    formatTime(d.time);
-
+  const time = document.createElement("span");
+  time.className = "time";
+  time.textContent = formatTime(d.time);
 
   nameLine.appendChild(name);
-
   nameLine.appendChild(time);
-
-
-  /* ---------------------
-     返信表示
-
-     返信の場合：
-
-     アイコン 名前
-     話す内容
-
-  --------------------- */
-
-  if(d.reply){
-
-    const replyBox =
-      document.createElement("div");
-
-    replyBox.className =
-      "replyPreview";
-
-
-    const replyIcon =
-      document.createElement("img");
-
-    replyIcon.src =
-      d.reply.icon
-      ||
-      "https://via.placeholder.com/40";
-
-    replyIcon.alt =
-      "返信先アイコン";
-
-    replyIcon.onerror =
-      ()=>{
-        replyIcon.src =
-          "https://via.placeholder.com/40";
-      };
-
-
-    const replyInfo =
-      document.createElement("div");
-
-    replyInfo.className =
-      "replyPreviewInfo";
-
-
-    const replyName =
-      document.createElement("div");
-
-    replyName.className =
-      "replyPreviewName";
-
-    replyName.textContent =
-      d.reply.name
-      ||
-      "名無し";
-
-
-    const replyText =
-      document.createElement("div");
-
-    replyText.className =
-      "replyPreviewText";
-
-    replyText.textContent =
-      d.reply.text
-      ||
-      "";
-
-
-    replyInfo.appendChild(replyName);
-
-    replyInfo.appendChild(replyText);
-
-
-    replyBox.appendChild(replyIcon);
-
-    replyBox.appendChild(replyInfo);
-
-
-    /* クリックしたら元メッセージへ */
-
-    replyBox.onclick =
-      ()=>{
-
-        const target =
-          document.getElementById(
-            "message-"
-            +
-            d.reply.messageKey
-          );
-
-
-        if(target){
-
-          target.scrollIntoView({
-            behavior:"smooth",
-            block:"center"
-          });
-
-        }
-
-      };
-
-
-    wrap.appendChild(replyBox);
-
-  }
-
-
-  /* ---------------------
-     本文
-  --------------------- */
-
-  const bubble =
-    document.createElement("div");
-
-  bubble.className =
-    "bubble";
-
-  bubble.textContent =
-    d.text
-    ||
-    "";
-
-
-  /* ---------------------
-     返信ボタン
-  --------------------- */
-
-  const actions =
-    document.createElement("div");
-
-  actions.className =
-    "messageActions";
-
-
-  const replyBtn =
-    document.createElement("button");
-
-  replyBtn.className =
-    "replyBtn";
-
-  replyBtn.textContent =
-    "返信";
-
-
-  replyBtn.onclick =
-    ()=>{
-
-      startReply({
-
-        messageKey:key,
-
-        name:
-          d.name
-          ||
-          "名無し",
-
-        text:
-          d.text
-          ||
-          "",
-
-        icon:
-          d.icon
-          ||
-          "https://via.placeholder.com/40"
-
-      });
-
-    };
-
-
-  actions.appendChild(replyBtn);
-
-
-  /* ---------------------
-     組み立て
-  --------------------- */
 
   wrap.appendChild(nameLine);
 
+  /* 返信の場合
+     アイコン 名前
+     話す内容 */
+  if(d.reply){
+
+    const replyBox = document.createElement("div");
+    replyBox.className = "replyPreview";
+
+    const replyIcon = document.createElement("img");
+    replyIcon.src =
+      d.reply.icon ||
+      "https://via.placeholder.com/40";
+
+    replyIcon.onerror = function(){
+      this.src = "https://via.placeholder.com/40";
+    };
+
+    const replyInfo = document.createElement("div");
+    replyInfo.className = "replyInfo";
+
+    const replyName = document.createElement("div");
+    replyName.className = "replyName";
+    replyName.textContent = d.reply.name || "名無し";
+
+    const replyText = document.createElement("div");
+    replyText.className = "replyText";
+    replyText.textContent = d.reply.text || "";
+
+    replyInfo.appendChild(replyName);
+    replyInfo.appendChild(replyText);
+
+    replyBox.appendChild(replyIcon);
+    replyBox.appendChild(replyInfo);
+
+    replyBox.onclick = function(){
+
+      const target = document.getElementById(
+        "message-" + d.reply.messageKey
+      );
+
+      if(target){
+        target.scrollIntoView({
+          behavior:"smooth",
+          block:"center"
+        });
+      }
+    };
+
+    wrap.appendChild(replyBox);
+  }
+
+  /* 本文 */
+  const bubble = document.createElement("div");
+  bubble.className = "bubble";
+  bubble.textContent = d.text || "";
+
   wrap.appendChild(bubble);
 
-  wrap.appendChild(actions);
+  /* 返信ボタン */
+  const replyBtn = document.createElement("button");
+  replyBtn.className = "replyBtn";
+  replyBtn.textContent = "返信";
 
+  replyBtn.onclick = function(){
+
+    startReply({
+      messageKey:key,
+      name:d.name || "名無し",
+      text:d.text || "",
+      icon:d.icon || "https://via.placeholder.com/40"
+    });
+
+  };
+
+  wrap.appendChild(replyBtn);
 
   div.appendChild(avatar);
-
   div.appendChild(wrap);
-
 
   messages.appendChild(div);
 
-
-  messages.scrollTop =
-    messages.scrollHeight;
-
+  messages.scrollTop = messages.scrollHeight;
 }
 
-
-/* =====================
-   返信開始
-===================== */
-
+/* 返信開始 */
 function startReply(data){
 
   replyData = data;
 
+  document.getElementById("replyBar").style.display = "flex";
 
-  const replyBar =
-    document.getElementById("replyBar");
+  document.getElementById("replyingText").textContent =
+    data.name + " に返信: " + data.text;
 
-  const replyingText =
-    document.getElementById("replyingText");
-
-
-  replyBar.style.display =
-    "flex";
-
-
-  replyingText.textContent =
-    `${data.name} に返信: ${data.text}`;
-
-
-  document.getElementById("msg")
-    .focus();
-
+  document.getElementById("msg").focus();
 }
 
-
-/* =====================
-   返信キャンセル
-===================== */
-
+/* 返信キャンセル */
 function cancelReply(){
 
   replyData = null;
 
+  document.getElementById("replyBar").style.display = "none";
 
-  document.getElementById("replyBar")
-    .style.display =
-    "none";
-
-
-  document.getElementById("replyingText")
-    .textContent =
-    "";
-
+  document.getElementById("replyingText").textContent = "";
 }
 
-
-/* =====================
-   オンライン表示
-===================== */
-
-let onlineStarted = false;
-
+/* オンライン表示 */
 function listenOnline(){
 
-  if(onlineStarted){
-    return;
-  }
+  onValue(ref(db,`${ROOT}/users`),(snap)=>{
 
-  onlineStarted = true;
+    const online = document.getElementById("online");
 
+    const data = snap.val() || {};
 
-  onValue(
-    ref(db,`${ROOT}/users`),
-    (snap)=>{
-
-      const onlineElement =
-        document.getElementById("online");
-
-      if(!onlineElement){
-        return;
-      }
-
-
-      const data =
-        snap.val()
-        ||
-        {};
-
-
-      const users =
-        Object.values(data)
-        .filter(
-          user => user && user.online
-        );
-
-
-      if(users.length === 0){
-
-        onlineElement.textContent =
-          "0人";
-
-        return;
-
-      }
-
-
-      const names =
-        users
-        .map(
-          user =>
-            user.name
-            ||
-            "名無し"
-        )
-        .join("、");
-
-
-      onlineElement.textContent =
-        `${users.length}人 (${names})`;
-
-    }
-  );
-
-}
-
-
-/* =====================
-   アイコン設定
-===================== */
-
-function openIconPanel(){
-
-  document.getElementById("iconUrl")
-    .value =
-    myIcon;
-
-
-  document.getElementById("iconPanel")
-    .style.display =
-    "flex";
-
-}
-
-
-function closeIconPanel(){
-
-  document.getElementById("iconPanel")
-    .style.display =
-    "none";
-
-}
-
-
-async function saveIcon(){
-
-  const input =
-    document.getElementById("iconUrl");
-
-  const newIcon =
-    input.value.trim();
-
-
-  if(!newIcon){
-
-    alert(
-      "画像URLを入力してください"
+    const users = Object.values(data).filter(
+      u => u && u.online
     );
 
+    const names = users.map(
+      u => u.name || "名無し"
+    );
+
+    online.textContent =
+      users.length + "人" +
+      (names.length ? " (" + names.join("、") + ")" : "");
+  });
+}
+
+/* アイコン設定を開く */
+function openIconPanel(){
+
+  document.getElementById("iconUrl").value = myIcon;
+
+  document.getElementById("iconPanel").style.display = "flex";
+}
+
+/* 閉じる */
+function closeIconPanel(){
+  document.getElementById("iconPanel").style.display = "none";
+}
+
+/* アイコン保存 */
+async function saveIcon(){
+
+  const newIcon =
+    document.getElementById("iconUrl").value.trim();
+
+  if(!newIcon){
+    alert("画像URLを入力してください");
     return;
-
   }
-
 
   myIcon = newIcon;
 
-
-  localStorage.setItem(
-    "mvlsm_icon",
-    myIcon
-  );
-
-
-  /* ログイン済みなら
-     Firebase上のユーザー情報も更新 */
+  localStorage.setItem("mvlsm_icon",myIcon);
 
   if(userId){
 
     try{
 
-      await set(
-        ref(
-          db,
-          `${ROOT}/users/${userId}`
-        ),
+      await update(
+        ref(db,`${ROOT}/users/${userId}`),
         {
-
-          name:username,
-
-          online:true,
-
           icon:myIcon,
-
+          name:username,
           isAdmin:isAdmin
-
         }
       );
 
     }catch(e){
-
       console.error(e);
-
     }
-
   }
-
 
   closeIconPanel();
 
-  alert(
-    "アイコンを保存しました！\n次のメッセージから使用されます。"
-  );
-
+  alert("アイコンを保存しました！");
 }
 
+/* ボタン設定 */
+document.getElementById("loginBtn")
+.addEventListener("click",login);
 
-/* =====================
-   初期化
-===================== */
+document.getElementById("adminBtn")
+.addEventListener("click",adminCheck);
 
-window.addEventListener(
-  "DOMContentLoaded",
-  ()=>{
+document.getElementById("sendBtn")
+.addEventListener("click",sendMessage);
 
+document.getElementById("cancelReplyBtn")
+.addEventListener("click",cancelReply);
 
-    /* 入室 */
+document.getElementById("iconSettingBtn")
+.addEventListener("click",openIconPanel);
 
-    document
-      .getElementById("loginBtn")
-      .addEventListener(
-        "click",
-        login
-      );
+document.getElementById("closeIconBtn")
+.addEventListener("click",closeIconPanel);
 
+document.getElementById("saveIconBtn")
+.addEventListener("click",saveIcon);
 
-    /* 管理者 */
-
-    document
-      .getElementById("adminBtn")
-      .addEventListener(
-        "click",
-        adminCheck
-      );
-
-
-    /* Enterで入室 */
-
-    document
-      .getElementById("pass")
-      .addEventListener(
-        "keydown",
-        (e)=>{
-
-          if(e.key === "Enter"){
-
-            e.preventDefault();
-
-            login();
-
-          }
-
-        }
-      );
-
-
-    /* 送信 */
-
-    document
-      .getElementById("sendBtn")
-      .addEventListener(
-        "click",
-        sendMessage
-      );
-
-
-    /* Enter送信 */
-
-    document
-      .getElementById("msg")
-      .addEventListener(
-        "keydown",
-        (e)=>{
-
-          if(e.key === "Enter"){
-
-            e.preventDefault();
-
-            sendMessage();
-
-          }
-
-        }
-      );
-
-
-    /* 返信キャンセル */
-
-    document
-      .getElementById("cancelReplyBtn")
-      .addEventListener(
-        "click",
-        cancelReply
-      );
-
-
-    /* アイコン設定を開く */
-
-    document
-      .getElementById("iconSettingBtn")
-      .addEventListener(
-        "click",
-        openIconPanel
-      );
-
-
-    /* アイコン保存 */
-
-    document
-      .getElementById("saveIconBtn")
-      .addEventListener(
-        "click",
-        saveIcon
-      );
-
-
-    /* アイコン設定を閉じる */
-
-    document
-      .getElementById("closeIconBtn")
-      .addEventListener(
-        "click",
-        closeIconPanel
-      );
-
+/* Enter送信 */
+document.getElementById("msg")
+.addEventListener("keydown",(e)=>{
+  if(e.key === "Enter"){
+    e.preventDefault();
+    sendMessage();
   }
-);
+});
+
+/* パスワード欄でEnter */
+document.getElementById("pass")
+.addEventListener("keydown",(e)=>{
+  if(e.key === "Enter"){
+    e.preventDefault();
+    login();
+  }
+});
 
 </script>
 
