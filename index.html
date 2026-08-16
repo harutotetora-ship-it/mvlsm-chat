@@ -13,12 +13,17 @@ background:#1e1f22;
 color:white;
 }
 
-#layout{display:flex;height:100vh;}
+#layout{
+display:flex;
+height:100vh;
+}
 
+/* サイドバー */
 #sidebar{
 width:180px;
 background:#2b2d31;
 padding:10px;
+box-sizing:border-box;
 }
 
 #sidebar button{
@@ -32,11 +37,17 @@ color:white;
 cursor:pointer;
 }
 
+#sidebar button:hover{
+background:#5865f2;
+}
+
+/* チャット */
 #chatArea{
 flex:1;
 display:flex;
 flex-direction:column;
 background:#313338;
+min-width:0;
 }
 
 #topBar{
@@ -51,40 +62,116 @@ overflow-y:auto;
 padding:10px;
 }
 
-.message{margin:10px 0;}
+/* メッセージ */
+.message{
+display:flex;
+margin:10px 0;
+}
 
 .avatar{
 width:32px;
 height:32px;
 border-radius:50%;
-margin-right:6px;
-vertical-align:middle;
+object-fit:cover;
+margin-right:7px;
+flex-shrink:0;
+}
+
+.bubbleWrap{
+max-width:70%;
+}
+
+.name{
+font-size:12px;
+color:#bbb;
+margin-bottom:3px;
+}
+
+.time{
+font-size:10px;
+color:#888;
+margin-left:5px;
 }
 
 .bubble{
 background:#40444b;
 padding:10px;
 border-radius:10px;
-display:inline-block;
-max-width:70%;
+word-break:break-word;
 }
 
-.admin b{
-background:linear-gradient(90deg,red,orange,yellow,green,cyan,blue,violet);
+/* 管理者虹色 */
+.adminName{
+background:linear-gradient(
+90deg,
+red,
+orange,
+yellow,
+green,
+cyan,
+blue,
+violet
+);
 -webkit-background-clip:text;
+background-clip:text;
 color:transparent;
 }
 
-.replyBtn{
-font-size:10px;
-background:none;
-border:none;
-color:#aaa;
-cursor:pointer;
-margin-top:5px;
+/* 返信表示 */
+.replyBox{
+background:#2b2d31;
+border-left:3px solid #5865f2;
+padding:7px;
+margin-bottom:5px;
+border-radius:4px;
+font-size:12px;
+max-width:100%;
+box-sizing:border-box;
 }
-.replyBtn:hover{color:white;}
 
+.replyTop{
+display:flex;
+align-items:center;
+gap:5px;
+margin-bottom:3px;
+}
+
+.replyIcon{
+width:22px;
+height:22px;
+border-radius:50%;
+object-fit:cover;
+}
+
+.replyName{
+font-size:11px;
+color:#ccc;
+font-weight:bold;
+}
+
+.replyText{
+color:#aaa;
+word-break:break-word;
+}
+
+/* 返信ボタン */
+.replyBtn{
+margin-top:5px;
+padding:4px 7px;
+font-size:11px;
+border:none;
+border-radius:4px;
+background:#40444b;
+color:#ccc;
+cursor:pointer;
+}
+
+.replyBtn:hover{
+background:#5865f2;
+color:white;
+}
+
+/* 入力 */
 #inputArea{
 display:flex;
 padding:10px;
@@ -97,6 +184,7 @@ padding:10px;
 border:none;
 border-radius:5px;
 outline:none;
+box-sizing:border-box;
 }
 
 #sendBtn{
@@ -109,6 +197,32 @@ color:white;
 cursor:pointer;
 }
 
+/* アイコン設定 */
+#iconArea{
+display:flex;
+padding:8px 10px;
+background:#2b2d31;
+border-top:1px solid #40444b;
+}
+
+#iconUrl{
+flex:1;
+padding:8px;
+border:none;
+border-radius:5px;
+box-sizing:border-box;
+}
+
+#iconBtn{
+margin-left:5px;
+padding:8px;
+border:none;
+border-radius:5px;
+background:#40444b;
+color:white;
+cursor:pointer;
+}
+
 /* ログイン */
 #login{
 max-width:300px;
@@ -117,25 +231,46 @@ background:#2b2d31;
 padding:20px;
 border-radius:10px;
 text-align:center;
+box-sizing:border-box;
 }
 
-input{
-width:90%;
+#login input{
+width:100%;
 padding:10px;
-margin:5px;
+margin:5px 0;
 border:none;
 border-radius:5px;
+box-sizing:border-box;
 }
 
-/* アイコンボタン（必ず見える） */
-#iconBtn{
-width:90%;
+#login button{
 padding:10px;
-margin:5px;
+margin:5px 2px;
 border:none;
 border-radius:5px;
+cursor:pointer;
 background:#5865f2;
 color:white;
+}
+
+#error{
+color:#ff7777;
+min-height:20px;
+}
+
+#replying{
+display:none;
+padding:5px 10px;
+background:#25262a;
+font-size:12px;
+color:#bbb;
+}
+
+#cancelReply{
+margin-left:8px;
+padding:2px 6px;
+border:none;
+border-radius:4px;
 cursor:pointer;
 }
 </style>
@@ -143,19 +278,24 @@ cursor:pointer;
 
 <body>
 
+<!-- ログイン -->
 <div id="login">
+
 <h2>MVLsmチャット</h2>
 
 <input id="name" placeholder="名前">
-<input type="password" id="pass" placeholder="パスワード">
+<input type="password" id="pass" placeholder="チャットパスワード">
+
+<br>
 
 <button id="loginBtn">入室</button>
-<button id="iconBtn">アイコン設定</button>
 <button id="adminBtn">管理者確認</button>
 
 <p id="error"></p>
+
 </div>
 
+<!-- チャット本体 -->
 <div id="layout" style="display:none;">
 
 <div id="sidebar">
@@ -166,10 +306,26 @@ cursor:pointer;
 
 <div id="chatArea">
 
-<div id="topBar">🟢 オンライン: <span id="online"></span></div>
+<div id="topBar">
+🟢 オンライン:
+<span id="online">読み込み中...</span>
+</div>
 
 <div id="messages"></div>
 
+<!-- 返信中表示 -->
+<div id="replying">
+<span id="replyingText"></span>
+<button id="cancelReply">×</button>
+</div>
+
+<!-- アイコン設定：必ず表示 -->
+<div id="iconArea">
+<input id="iconUrl" placeholder="アイコン画像URL">
+<button id="iconBtn">アイコン設定</button>
+</div>
+
+<!-- 入力 -->
 <div id="inputArea">
 <input id="msg" placeholder="メッセージ">
 <button id="sendBtn">送信</button>
@@ -180,7 +336,10 @@ cursor:pointer;
 
 <script type="module">
 
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+/* Firebase */
+import { initializeApp }
+from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+
 import {
 getDatabase,
 ref,
@@ -190,209 +349,759 @@ onValue,
 onChildAdded,
 onDisconnect,
 off
-} from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+}
+from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+
+/* Firebase Authentication */
+import {
+getAuth,
+signInAnonymously,
+onAuthStateChanged
+}
+from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+
+
+/* =========================
+   Firebase設定
+========================= */
 
 const firebaseConfig = {
+
 apiKey: "AIzaSyARMFFYZOfZlptX72yn17AqCrXq3vyKK1s",
+
 authDomain: "smtyatto.firebaseapp.com",
-databaseURL: "https://smtyatto-default-rtdb.firebaseio.com",
+
+databaseURL:
+"https://smtyatto-default-rtdb.firebaseio.com",
+
 projectId: "smtyatto",
-storageBucket: "smtyatto.firebasestorage.app",
-messagingSenderId: "720432898013",
-appId: "1:720432898013:web:3fc9bb90082235ab506034"
+
+storageBucket:
+"smtyatto.firebasestorage.app",
+
+messagingSenderId:
+"720432898013",
+
+appId:
+"1:720432898013:web:3fc9bb90082235ab506034"
+
 };
+
+
+/* =========================
+   初期化
+========================= */
 
 const app = initializeApp(firebaseConfig);
+
 const db = getDatabase(app);
 
-const ROOT="smchat";
+const auth = getAuth(app);
 
-let userId=localStorage.getItem("uid")||crypto.randomUUID();
-localStorage.setItem("uid",userId);
 
-let username="名無し";
-let currentRoom="zatsudan";
-let isAdmin=false;
-let replyTarget=null;
-let chatRef;
+/* =========================
+   設定
+========================= */
 
-/* ================= 入室 ================= */
-window.addEventListener("DOMContentLoaded",()=>{
+const ROOT = "smchat";
 
-document.getElementById("loginBtn").onclick=()=>{
+/* 管理者UIDをここに入れる */
+const ADMIN_UID = "YOUR_ADMIN_UID";
 
-const pass=document.getElementById("pass").value;
-username=document.getElementById("name").value||"名無し";
 
-if(pass!=="MvLO"){
-document.getElementById("error").innerText="パスワードミス";
-return;
+/* =========================
+   変数
+========================= */
+
+let userId = null;
+
+let username = "名無し";
+
+let currentRoom = "zatsudan";
+
+let isAdmin = false;
+
+let chatRef = null;
+
+let replyTarget = null;
+
+
+/* =========================
+   HTML安全表示用
+========================= */
+
+function escapeHTML(text){
+
+const div = document.createElement("div");
+
+div.textContent = String(text || "");
+
+return div.innerHTML;
+
 }
 
-document.getElementById("login").style.display="none";
-document.getElementById("layout").style.display="flex";
 
-set(ref(db,`${ROOT}/users/${userId}`),{
+/* =========================
+   Firebase Authentication
+========================= */
+
+async function startAuthentication(){
+
+try{
+
+if(!auth.currentUser){
+
+await signInAnonymously(auth);
+
+}
+
+}
+catch(error){
+
+console.error(error);
+
+document.getElementById("error").innerText =
+"Firebase認証エラー: " + error.code;
+
+}
+
+}
+
+
+/* =========================
+   Auth状態監視
+========================= */
+
+onAuthStateChanged(auth,(user)=>{
+
+if(user){
+
+userId = user.uid;
+
+isAdmin = userId === ADMIN_UID;
+
+console.log("Firebase UID:",userId);
+
+}
+
+});
+
+
+/* =========================
+   最初に認証開始
+========================= */
+
+startAuthentication();
+
+
+/* =========================
+   ユーザー情報保存
+========================= */
+
+function saveUser(){
+
+if(!userId) return;
+
+const icon =
+localStorage.getItem("icon") ||
+"https://via.placeholder.com/64";
+
+set(
+ref(db,`${ROOT}/users/${userId}`),
+{
 name:username,
 online:true,
-icon:localStorage.getItem("icon")||"https://via.placeholder.com/30"
-});
-
-onDisconnect(ref(db,`${ROOT}/users/${userId}`)).set({online:false});
-
-listenRoom();
-};
-
-/* 管理者 */
-document.getElementById("adminBtn").onclick=()=>{
-const pass=prompt("管理者パスワード");
-if(pass==="admin123"){
-isAdmin=true;
-alert("管理者ON");
-}else alert("違う");
-};
-
-/* 送信 */
-document.getElementById("sendBtn").onclick=sendMessage;
-
-/* Enter */
-document.getElementById("msg").addEventListener("keydown",(e)=>{
-if(e.key==="Enter"){
-e.preventDefault();
-sendMessage();
+icon:icon,
+isAdmin:isAdmin
 }
+).catch(error=>{
+
+console.error(error);
+
 });
 
-/* ★アイコンボタン（確実に動く） */
-document.getElementById("iconBtn").onclick=()=>{
+}
 
-const url=prompt("アイコンURL");
 
-if(!url) return;
+/* =========================
+   入室
+========================= */
 
+document.getElementById("loginBtn").onclick =
+async ()=>{
+
+const pass =
+document.getElementById("pass").value;
+
+username =
+document.getElementById("name").value.trim() || "名無し";
+
+
+/* 今までのチャットパスワード */
+if(pass !== "MvLO"){
+
+document.getElementById("error").innerText =
+"パスワードミス";
+
+return;
+
+}
+
+
+/* Authがまだなら待つ */
+if(!auth.currentUser){
+
+await startAuthentication();
+
+}
+
+
+/* UID取得 */
+if(!auth.currentUser){
+
+document.getElementById("error").innerText =
+"Firebase Authenticationに接続できません";
+
+return;
+
+}
+
+userId = auth.currentUser.uid;
+
+
+/* 管理者判定 */
+isAdmin = userId === ADMIN_UID;
+
+
+/* 画面切り替え */
+document.getElementById("login").style.display =
+"none";
+
+document.getElementById("layout").style.display =
+"flex";
+
+
+/* ユーザー保存 */
+saveUser();
+
+
+/* 切断時オフライン */
+onDisconnect(
+ref(db,`${ROOT}/users/${userId}`)
+).update({
+online:false
+});
+
+
+/* チャット開始 */
+listenRoom();
+
+};
+
+
+/* =========================
+   管理者確認
+========================= */
+
+document.getElementById("adminBtn").onclick =
+()=>{
+
+if(!auth.currentUser){
+
+alert("Firebase認証中です。少し待ってからもう一度押してください。");
+
+return;
+
+}
+
+const input =
+prompt("管理者UIDを確認します。\nこの端末のUIDを表示しますか？");
+
+
+if(input === "表示"){
+
+alert(
+"あなたのFirebase UID:\n\n" +
+auth.currentUser.uid +
+"\n\nこれをADMIN_UIDに設定すると管理者になります。"
+);
+
+}else{
+
+alert(
+"管理者判定はFirebase AuthenticationのUIDで行います。"
+);
+
+}
+
+};
+
+
+/* =========================
+   アイコン設定
+========================= */
+
+document.getElementById("iconBtn").onclick =
+()=>{
+
+const input =
+document.getElementById("iconUrl");
+
+const url = input.value.trim();
+
+if(!url){
+
+alert("アイコン画像URLを入力してください");
+
+return;
+
+}
+
+
+/* localStorage保存 */
 localStorage.setItem("icon",url);
 
-set(ref(db,`${ROOT}/users/${userId}`),{
-name:username,
-online:true,
-icon:url
-});
+
+/* Firebase保存 */
+saveUser();
+
+
+input.value = "";
 
 alert("アイコン設定完了！");
+
 };
 
-});
 
-/* ================= 送信 ================= */
+/* =========================
+   送信
+========================= */
+
 function sendMessage(){
 
-const input=document.getElementById("msg");
-if(!input.value) return;
+const input =
+document.getElementById("msg");
 
-push(ref(db,`${ROOT}/chat/${currentRoom}`),{
-userId,
-name:username,
-text:input.value,
-time:Date.now(),
-isAdmin:isAdmin,
-reply:replyTarget||null,
-icon:localStorage.getItem("icon")||"https://via.placeholder.com/30"
-});
+const text =
+input.value.trim();
 
-replyTarget=null;
-input.value="";
+if(!text) return;
+
+if(!userId){
+
+alert("まだFirebase認証が完了していません");
+
+return;
+
 }
 
-/* ================= ルーム ================= */
-window.switchRoom=function(room){
-currentRoom=room;
-document.getElementById("messages").innerHTML="";
-if(chatRef) off(chatRef);
-listenRoom();
+
+/* 現在のアイコン */
+const icon =
+localStorage.getItem("icon") ||
+"https://via.placeholder.com/64";
+
+
+/* メッセージ */
+const messageData = {
+
+userId:userId,
+
+name:username,
+
+text:text,
+
+time:Date.now(),
+
+isAdmin:isAdmin,
+
+icon:icon
+
 };
 
-/* ================= チャット ================= */
+
+/* 返信情報 */
+if(replyTarget){
+
+messageData.reply = {
+
+userId:replyTarget.userId,
+
+name:replyTarget.name,
+
+text:replyTarget.text,
+
+icon:replyTarget.icon,
+
+isAdmin:replyTarget.isAdmin
+
+};
+
+}
+
+
+/* Firebase送信 */
+push(
+ref(db,`${ROOT}/chat/${currentRoom}`),
+messageData
+)
+.then(()=>{
+
+input.value = "";
+
+clearReply();
+
+})
+.catch(error=>{
+
+console.error(error);
+
+alert(
+"送信できませんでした: " +
+error.code
+);
+
+});
+
+}
+
+
+/* =========================
+   送信ボタン
+========================= */
+
+document.getElementById("sendBtn").onclick =
+sendMessage;
+
+
+/* =========================
+   Enter送信
+========================= */
+
+document.getElementById("msg").addEventListener(
+"keydown",
+(e)=>{
+
+if(e.key === "Enter" &&
+!e.shiftKey){
+
+e.preventDefault();
+
+sendMessage();
+
+}
+
+}
+);
+
+
+/* =========================
+   返信設定
+========================= */
+
+function setReply(data){
+
+replyTarget = {
+
+userId:data.userId || "",
+
+name:data.name || "名無し",
+
+text:data.text || "",
+
+icon:data.icon ||
+"https://via.placeholder.com/64",
+
+isAdmin:!!data.isAdmin
+
+};
+
+
+document.getElementById("replyingText").innerText =
+"返信中: " +
+replyTarget.name +
+"「" +
+replyTarget.text.slice(0,30) +
+"」";
+
+
+document.getElementById("replying").style.display =
+"block";
+
+
+document.getElementById("msg").focus();
+
+}
+
+
+/* =========================
+   返信解除
+========================= */
+
+function clearReply(){
+
+replyTarget = null;
+
+document.getElementById("replying").style.display =
+"none";
+
+document.getElementById("replyingText").innerText =
+"";
+
+}
+
+
+document.getElementById("cancelReply").onclick =
+clearReply;
+
+
+/* =========================
+   ルーム切り替え
+========================= */
+
+window.switchRoom = function(room){
+
+currentRoom = room;
+
+
+/* 返信解除 */
+clearReply();
+
+
+/* 画面クリア */
+document.getElementById("messages").innerHTML =
+"";
+
+
+/* 古い監視停止 */
+if(chatRef){
+
+off(chatRef);
+
+}
+
+
+/* 新しい部屋 */
+listenRoom();
+
+};
+
+
+/* =========================
+   チャット監視
+========================= */
+
 function listenRoom(){
 
-chatRef=ref(db,`${ROOT}/chat/${currentRoom}`);
+if(!userId) return;
+
+chatRef =
+ref(db,`${ROOT}/chat/${currentRoom}`);
+
 
 onChildAdded(chatRef,(snap)=>{
 
-const d=snap.val();
+const d = snap.val();
+
 if(!d) return;
 
-const date=new Date(d.time||Date.now());
-const time=date.getHours()+":"+String(date.getMinutes()).padStart(2,"0");
 
-const icon=d.icon||"https://via.placeholder.com/30";
+/* 時間 */
+const date =
+new Date(d.time || Date.now());
 
-const div=document.createElement("div");
-div.className="message";
+const time =
+String(date.getHours()).padStart(2,"0") +
+":" +
+String(date.getMinutes()).padStart(2,"0");
 
-div.innerHTML=`
-<div>
 
-${d.reply ? `
-<div style="
-font-size:11px;
-color:#aaa;
-border-left:2px solid #5865f2;
-padding-left:6px;
-margin-bottom:6px;
-opacity:0.9;
-">
-↩ ${d.reply}
+/* アイコン */
+const icon =
+d.icon ||
+"https://via.placeholder.com/64";
+
+
+/* メッセージ作成 */
+const div =
+document.createElement("div");
+
+div.className =
+"message";
+
+
+/* =========================
+   返信HTML
+========================= */
+
+let replyHTML = "";
+
+
+if(d.reply){
+
+const replyIcon =
+escapeHTML(
+d.reply.icon ||
+"https://via.placeholder.com/64"
+);
+
+const replyName =
+escapeHTML(
+d.reply.name ||
+"名無し"
+);
+
+const replyText =
+escapeHTML(
+d.reply.text ||
+""
+);
+
+
+replyHTML = `
+
+<div class="replyBox">
+
+<div class="replyTop">
+
+<img
+class="replyIcon"
+src="${replyIcon}"
+onerror="this.src='https://via.placeholder.com/64'"
+>
+
+<div class="replyName">
+${replyName}
 </div>
-` : ""}
-
-<div style="display:flex;align-items:center;gap:6px;">
-<img class="avatar" src="${icon}">
-
-<div class="${d.isAdmin ? "admin" : ""}">
-<b>${d.name}</b>
-<span style="font-size:10px;color:#888;margin-left:5px">
-${time}
-</span>
-</div>
-</div>
-
-<div class="bubble" style="margin-top:4px;">
-${d.text}
-</div>
-
-<button class="replyBtn">返信</button>
 
 </div>
+
+<div class="replyText">
+${replyText}
+</div>
+
+</div>
+
 `;
 
-/* 返信 */
-div.querySelector(".replyBtn").onclick=()=>{
-replyTarget=d.text;
-document.getElementById("msg").placeholder="返信: "+d.text.slice(0,20);
+}
+
+
+/* 名前 */
+const nameClass =
+d.isAdmin ?
+"adminName" :
+"";
+
+
+/* =========================
+   表示
+========================= */
+
+div.innerHTML = `
+
+<img
+class="avatar"
+src="${escapeHTML(icon)}"
+onerror="this.src='https://via.placeholder.com/64'"
+>
+
+<div class="bubbleWrap">
+
+${replyHTML}
+
+<div class="name">
+
+<b class="${nameClass}">
+${escapeHTML(d.name)}
+</b>
+
+<span class="time">
+${time}
+</span>
+
+</div>
+
+<div class="bubble">
+${escapeHTML(d.text)}
+</div>
+
+<button class="replyBtn">
+返信
+</button>
+
+</div>
+
+`;
+
+
+/* =========================
+   返信ボタン
+========================= */
+
+div.querySelector(".replyBtn").onclick =
+()=>{
+
+setReply(d);
+
 };
 
-document.getElementById("messages").appendChild(div);
+
+/* 表示 */
+document.getElementById("messages")
+.appendChild(div);
+
+
+/* 下までスクロール */
+document.getElementById("messages").scrollTop =
+document.getElementById("messages").scrollHeight;
 
 });
 
 }
 
-/* ================= オンライン ================= */
-onValue(ref(db,`${ROOT}/users`),(snap)=>{
 
-const el=document.getElementById("online");
-if(!el) return;
+/* =========================
+   オンライン一覧
+========================= */
 
-const data=snap.val()||{};
-let online="";
+onValue(
+ref(db,`${ROOT}/users`),
+(snap)=>{
+
+const onlineElement =
+document.getElementById("online");
+
+if(!onlineElement) return;
+
+
+const data =
+snap.val() || {};
+
+
+const names = [];
+
 
 Object.values(data).forEach(u=>{
-if(u.online) online+=u.name+" ";
+
+if(u && u.online){
+
+names.push(
+u.name || "名無し"
+);
+
+}
+
 });
 
-el.innerText=online;
 
-});
+onlineElement.innerText =
+names.length ?
+names.join(" ") :
+"なし";
+
+}
+);
 
 </script>
 
